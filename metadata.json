@@ -1,0 +1,6 @@
+{
+  "name": "Kotha Pasal",
+  "description": "Find verified rooms, flats, and student hostels across Nepal. Post listings, search by cities or budgets, and discover verified rentals.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
