@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 import { 
   X, 
   MapPin, 
@@ -44,6 +45,40 @@ export default function PropertyDetailModal({
 }: PropertyDetailModalProps) {
   const [revealed, setRevealed] = useState(false);
   const [activeImage, setActiveImage] = useState(property.image);
+
+  // Live rating from Supabase
+  const [myStars, setMyStars] = useState(0);
+  const [ratingAgg, setRatingAgg] = useState<{ avg: number; count: number }>({ avg: property.rating || 0, count: 0 });
+
+  const ratingType = property.type === 'hostel' ? 'hostel' : 'listing';
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('ratings').select('stars').eq('target_type', ratingType).eq('target_id', property.id);
+      const arr = (data || []).map((r: any) => r.stars);
+      if (arr.length) setRatingAgg({ avg: arr.reduce((a: number, b: number) => a + b, 0) / arr.length, count: arr.length });
+      const { data: s } = await supabase.auth.getSession();
+      const uid = s.session?.user?.id;
+      if (uid) {
+        const { data: mine } = await supabase.from('ratings').select('stars').eq('target_type', ratingType).eq('target_id', property.id).eq('user_id', uid).maybeSingle();
+        if (mine) setMyStars(mine.stars);
+      }
+    })();
+  }, [property.id]);
+
+  const submitStars = async (n: number) => {
+    setMyStars(n);
+    const { data: s } = await supabase.auth.getSession();
+    const uid = s.session?.user?.id;
+    if (!uid) { alert('Please sign in to rate.'); return; }
+    await supabase.from('ratings').upsert(
+      { user_id: uid, target_type: ratingType, target_id: property.id, stars: n },
+      { onConflict: 'user_id,target_type,target_id' }
+    );
+    const { data } = await supabase.from('ratings').select('stars').eq('target_type', ratingType).eq('target_id', property.id);
+    const arr = (data || []).map((r: any) => r.stars);
+    if (arr.length) setRatingAgg({ avg: arr.reduce((a: number, b: number) => a + b, 0) / arr.length, count: arr.length });
+  };
   
   // Review form states
   const [newReviewText, setNewReviewText] = useState('');
@@ -223,6 +258,23 @@ export default function PropertyDetailModal({
               </div>
             )}
 
+            {/* Ratings (synced to Supabase) */}
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <span className="font-extrabold text-gray-800">Ratings</span>
+                <span className="ml-2 text-sm text-gray-500">
+                  {ratingAgg.count > 0 ? `★ ${ratingAgg.avg.toFixed(1)} (${ratingAgg.count})` : 'No ratings yet'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-400 font-semibold mr-1">Rate:</span>
+                {[1, 2, 3, 4, 5].map(i => (
+                  <button key={i} onClick={() => submitStars(i)} className="text-2xl leading-none"
+                    style={{ color: i <= myStars ? '#f5b400' : '#d1d5db' }}>★</button>
+                ))}
+              </div>
+            </div>
+
             {/* Amenities Grid */}
             <div>
               <h3 className="font-extrabold text-lg text-gray-800 mb-4">Amenities Included</h3>
@@ -241,29 +293,6 @@ export default function PropertyDetailModal({
               </div>
             </div>
 
-            {/* Map Placeholder */}
-            <div>
-              <h3 className="font-extrabold text-lg text-gray-800 mb-3">Approximate Location</h3>
-              <div className="h-64 rounded-2xl relative overflow-hidden border border-gray-200 shadow-xs bg-gray-100">
-                <img 
-                  src={IMAGES.mapPatanRepresent} 
-                  alt="Nepal map location representation" 
-                  className="w-full h-full object-cover opacity-85"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-red-900/5 hover:bg-transparent transition-colors duration-500" />
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  {/* Floating Bounce Map Pin */}
-                  <div className="w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-2xl animate-bounce">
-                    <MapPin className="w-7 h-7" />
-                  </div>
-                </div>
-                <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-xs px-3 py-1.5 rounded-lg shadow-md border border-gray-100 max-w-xs">
-                  <p className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">Search Target</p>
-                  <p className="text-[11px] text-gray-500 font-medium truncate mt-0.5">{property.area}, {property.city}</p>
-                </div>
-              </div>
-            </div>
 
           </div>
 
@@ -374,126 +403,6 @@ export default function PropertyDetailModal({
 
         </div>
 
-        {/* Reviews segment */}
-        <div className="p-4 md:p-8 bg-gray-50 border-t border-gray-100">
-          <h3 className="font-sans font-black text-xl text-gray-800 mb-6 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-gray-400" />
-            Inquiries & Landlord Reviews ({property.reviews.length})
-          </h3>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            {/* Reviews list (Col-span 2) */}
-            <div className="lg:col-span-2 space-y-4">
-              {property.reviews.length === 0 ? (
-                <div className="text-center py-8 bg-white border border-gray-150 rounded-2xl text-gray-400 text-xs font-medium">
-                  No public reviews posted yet. Be the first to leave a feedback or query!
-                </div>
-              ) : (
-                property.reviews.map((rev) => (
-                  <div key={rev.id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-2xs">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex items-center gap-2.5">
-                        <img 
-                          src={rev.reviewerAvatar || IMAGES.avatarDefault} 
-                          alt="Reviewer" 
-                          className="w-9 h-9 rounded-full object-cover border border-gray-200" 
-                        />
-                        <div>
-                          <h5 className="font-extrabold text-sm text-gray-800">{rev.reviewerName}</h5>
-                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{rev.date}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded text-amber-700 font-mono text-xs font-bold leading-none">
-                        <Star className="w-3" />
-                        <span>{rev.rating.toFixed(1)}</span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-3 leading-relaxed font-semibold">
-                      {rev.text}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Submit review sidebar */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-xs h-fit">
-              <h4 className="font-extrabold text-sm text-gray-800 mb-4">Post a Review / Query</h4>
-              <form onSubmit={handleSubmitReview} className="space-y-4">
-                
-                {/* Full name */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
-                    Your Full Name
-                  </label>
-                  <input 
-                    type="text" 
-                    value={newReviewName}
-                    onChange={(e) => setNewReviewName(e.target.value)}
-                    required
-                    placeholder="E.g. Ashish Ghimire" 
-                    className="w-full text-xs font-semibold py-2.5 px-3 bg-gray-50 border border-gray-250 focus:outline-none focus:ring-1 focus:ring-primary rounded-xl"
-                  />
-                </div>
-
-                {/* Rating selection digits */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
-                    Overall Rating
-                  </label>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={`${star}-option`}
-                        type="button"
-                        onClick={() => setNewReviewRating(star)}
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs scale-90 hover:scale-100 transition-transform ${
-                          star <= newReviewRating 
-                            ? 'bg-amber-100 text-amber-800' 
-                            : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                        }`}
-                      >
-                        {star} ★
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Question description area */}
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
-                    Your Review / Query
-                  </label>
-                  <textarea 
-                    rows={3}
-                    value={newReviewText}
-                    onChange={(e) => setNewReviewText(e.target.value)}
-                    required
-                    placeholder="Write details about rent water schedule, electricity sub-meter, deposits, etc."
-                    className="w-full text-xs font-semibold p-3 bg-gray-50 border border-gray-250 focus:outline-none focus:ring-1 focus:ring-primary rounded-xl"
-                  />
-                </div>
-
-                {/* Actions button */}
-                <button
-                  type="submit"
-                  className="w-full py-2.5 bg-secondary hover:bg-opacity-90 text-white font-bold text-xs rounded-full transition-all cursor-pointer shadow-sm text-center"
-                >
-                  Publish Public Review
-                </button>
-
-                {reviewSubmitSuccess && (
-                  <p className="text-[11px] text-emerald-600 font-bold text-center leading-normal mt-2 animate-bounce">
-                    ✓ Feedback posted successfully! Placed on room listing stream.
-                  </p>
-                )}
-
-              </form>
-            </div>
-
-          </div>
-        </div>
 
       </div>
     </div>

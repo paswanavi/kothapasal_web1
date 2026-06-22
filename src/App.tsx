@@ -33,6 +33,7 @@ import PropertyDetailModal from './components/PropertyDetailModal';
 import ListPropertyForm from './components/ListPropertyForm';
 import Login from './components/Login';
 import HostelManager from './components/HostelManager';
+import HostelPage from './components/HostelPage';
 
 export default function App() {
   // Main states
@@ -50,6 +51,28 @@ export default function App() {
   const [profile, setProfile] = useState<any>(null);
   const [myListingIds, setMyListingIds] = useState<string[]>([]);
   const [listMode, setListMode] = useState<'room' | 'hostel'>('room');
+  const [profEditing, setProfEditing] = useState(false);
+  const [profName, setProfName] = useState('');
+  const [profBusy, setProfBusy] = useState(false);
+
+  const onAvatarFile = async (file?: File) => {
+    if (!file || !session?.user?.id) return;
+    setProfBusy(true);
+    try {
+      const url = await uploadImage('avatars', file);
+      await supabase.from('profiles').update({ avatar_url: url }).eq('id', session.user.id);
+      await loadProfile(session.user.id);
+    } catch (e: any) { alert('Upload failed: ' + e.message); }
+    setProfBusy(false);
+  };
+
+  const saveProfileName = async () => {
+    if (!session?.user?.id) return;
+    setProfBusy(true);
+    await supabase.from('profiles').update({ full_name: profName }).eq('id', session.user.id);
+    await loadProfile(session.user.id);
+    setProfEditing(false); setProfBusy(false);
+  };
 
   const loadProfile = async (uid?: string) => {
     if (!uid) { setProfile(null); setMyListingIds([]); return; }
@@ -103,6 +126,7 @@ export default function App() {
 
   // Interactive detail overlay
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [selectedHostel, setSelectedHostel] = useState<Property | null>(null);
 
   // Home search bar entries (local to home but updates filters on click)
   const [homeLocation, setHomeLocation] = useState<string>('');
@@ -118,11 +142,15 @@ export default function App() {
   // Helper dynamic handlers
   const handleToggleFavorite = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (favorites.includes(id)) {
-      setFavorites(favorites.filter(favId => favId !== id));
-    } else {
-      setFavorites([...favorites, id]);
-    }
+    const has = favorites.includes(id);
+    setFavorites(has ? favorites.filter(f => f !== id) : [...favorites, id]);
+    // Persist to Supabase
+    (async () => {
+      const uid = session?.user?.id;
+      if (!uid) return;
+      if (has) await supabase.from('saved_listings').delete().eq('user_id', uid).eq('listing_id', id);
+      else await supabase.from('saved_listings').upsert({ user_id: uid, listing_id: id }, { onConflict: 'user_id,listing_id' });
+    })();
   };
 
   const handleAddCredits = () => {
@@ -306,6 +334,11 @@ export default function App() {
 
   if (!authReady) return null;
   if (!session) return <Login />;
+  if (selectedHostel) return (
+    <div className="min-h-screen bg-surface-bg">
+      <HostelPage hostel={selectedHostel} onBack={() => setSelectedHostel(null)} />
+    </div>
+  );
 
   return (
     <div className="min-h-screen pb-24 md:pb-8 text-gray-800 bg-surface-bg flex flex-col font-sans transition-colors pt-20">
@@ -316,7 +349,7 @@ export default function App() {
         setCurrentTab={setCurrentTab}
         credits={credits}
         onAddCredits={handleAddCredits}
-        avatar={IMAGES.avatarDefault}
+        avatar={profile?.avatar_url || IMAGES.avatarDefault}
       />
 
       {/* Primary content router */}
@@ -414,7 +447,7 @@ export default function App() {
             </section>
 
             {/* Quick Categories Bento shortcuts */}
-            <section className="max-w-[1240px] mx-auto px-4 md:px-8">
+            <section className="w-full px-4 md:px-8">
               <h2 className="font-sans font-black text-xl text-gray-800 mb-6 text-center md:text-left flex items-center gap-2">
                 <Compass className="w-5 h-5 text-primary" />
                 Find Rentals by Category
@@ -462,7 +495,7 @@ export default function App() {
             </section>
 
             {/* Horizontal featured slider line */}
-            <section className="max-w-[1240px] mx-auto px-4 md:px-8">
+            <section className="w-full px-4 md:px-8">
               <div className="flex justify-between items-end mb-6">
                 <div>
                   <h2 className="font-sans font-black text-xl text-gray-800 flex items-center gap-2">
@@ -495,7 +528,7 @@ export default function App() {
             </section>
 
             {/* Ad Banner Slot */}
-            <section className="max-w-[1240px] mx-auto px-4 md:px-8">
+            <section className="w-full px-4 md:px-8">
               <div className="w-full bg-gray-100 rounded-2xl flex items-center justify-center min-h-[100px] border border-gray-200 shadow-inner relative overflow-hidden p-4">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block text-center">
                   📢 Sponsorship Banner: Top Colleges and hostels associate programs. Contact support to sponsor.
@@ -508,7 +541,7 @@ export default function App() {
 
         {/* VIEW 2: EXPLORE / SEARCH RESULTS */}
         {currentTab === 'explore' && (
-          <div className="max-w-[1240px] mx-auto px-4 md:px-8 py-8">
+          <div className="w-full px-4 md:px-8 py-8">
             <div className="flex flex-col md:flex-row gap-8">
               
               {/* Left side Filter sticky sidebar */}
@@ -662,7 +695,7 @@ export default function App() {
 
         {/* VIEW 3: HOSTELS TAB */}
         {currentTab === 'hostels' && (
-          <div className="max-w-[1240px] mx-auto px-4 md:px-8 py-8 space-y-8 animate-in fade-in duration-300">
+          <div className="w-full px-4 md:px-8 py-8 space-y-8 animate-in fade-in duration-300">
             
             {/* Tab header toggles */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-gray-150">
@@ -670,9 +703,6 @@ export default function App() {
                 <h2 className="font-sans font-black text-2xl text-gray-800 leading-none">
                   Student Hostels Finder
                 </h2>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">
-                  Browse Boys and Girls hostels in Kathmandu and Lalitpur (Food + Laundry packages included)
-                </p>
               </div>
 
               {/* Gender Preference Pill selectors */}
@@ -710,9 +740,9 @@ export default function App() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredHostels.map((prop) => (
-                  <div 
+                  <div
                     key={prop.id}
-                    onClick={() => setSelectedProperty(prop)}
+                    onClick={() => setSelectedHostel(prop)}
                     className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-lg overflow-hidden flex flex-col group cursor-pointer transition-all pb-4 relative"
                   >
                     
@@ -726,10 +756,12 @@ export default function App() {
                           referrerPolicy="no-referrer"
                         />
                       </div>
-                      <span className="absolute bottom-4 left-6 bg-white/95 px-3 py-1 rounded-xl text-[10.5px] font-bold text-gray-700 shadow-md border border-gray-50 uppercase tracking-widest flex items-center gap-1">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                        Available Rooms
-                      </span>
+                      {(prop.hostelSeaterOptions?.length ?? 0) > 0 && (
+                        <span className="absolute bottom-4 left-6 bg-white/95 px-3 py-1 rounded-xl text-[10.5px] font-bold text-gray-700 shadow-md border border-gray-50 uppercase tracking-widest flex items-center gap-1">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                          {prop.hostelSeaterOptions!.length} Available Room{prop.hostelSeaterOptions!.length > 1 ? 's' : ''}
+                        </span>
+                      )}
                     </div>
 
                     {/* Meta details */}
@@ -794,7 +826,7 @@ export default function App() {
 
         {/* VIEW 4: LIST PROPERTY FORM */}
         {currentTab === 'list_property' && (
-          <div className="max-w-[1240px] mx-auto px-4 md:px-8 py-8 space-y-8 animate-in fade-in duration-300">
+          <div className="w-full px-4 md:px-8 py-8 space-y-8 animate-in fade-in duration-300">
             <div className="inline-flex bg-white border border-gray-200 rounded-full p-1 gap-1">
               <button onClick={() => setListMode('room')}
                 className={`px-5 py-2 rounded-full text-sm font-bold ${listMode === 'room' ? 'bg-primary text-white' : 'text-gray-500'}`}>
@@ -818,7 +850,7 @@ export default function App() {
 
         {/* VIEW 5: SAVED PROPERTIES */}
         {currentTab === 'saved' && (
-          <div className="max-w-[1240px] mx-auto px-4 md:px-8 py-8 space-y-8 animate-in fade-in duration-300">
+          <div className="w-full px-4 md:px-8 py-8 space-y-8 animate-in fade-in duration-300">
             <div>
               <h2 className="font-sans font-black text-2xl text-gray-800 leading-none">
                 Saved Wishlist
@@ -860,118 +892,94 @@ export default function App() {
 
         {/* VIEW 6: USER PROFILE DASHBOARD */}
         {currentTab === 'profile' && (
-          <div className="max-w-[1240px] mx-auto px-4 md:px-8 py-8 space-y-8 animate-in fade-in duration-300">
-            
-            {/* Profile banner layout */}
-            <div className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 shadow-xs flex flex-col md:flex-row items-center gap-8 justify-between">
-              <div className="flex flex-col md:flex-row items-center gap-5 text-center md:text-left">
-                <img
-                  src={profile?.avatar_url || IMAGES.avatarDefault}
-                  alt="Avatar"
-                  className="w-20 h-20 rounded-full object-cover ring-4 ring-green-50 border border-gray-100"
-                  referrerPolicy="no-referrer"
-                />
+          <div className="w-full px-4 md:px-8 py-8 space-y-6 animate-in fade-in duration-300 max-w-3xl mx-auto">
+
+            {/* Profile header card */}
+            <div className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 shadow-sm flex items-center justify-between gap-6">
+              <div className="flex items-center gap-5">
+                <label className="relative cursor-pointer group">
+                  <img
+                    src={profile?.avatar_url || IMAGES.avatarDefault}
+                    alt="avatar"
+                    className="w-24 h-24 rounded-full object-cover ring-2 ring-primary/30"
+                    referrerPolicy="no-referrer"
+                  />
+                  <span className="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition">Change</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => onAvatarFile(e.target.files?.[0])} />
+                </label>
                 <div>
-                  <div className="flex flex-wrap justify-center md:justify-start items-center gap-2">
-                    <h3 className="font-sans font-black text-2xl text-gray-800">{profile?.full_name || 'My Profile'}</h3>
-                    <span className="bg-primary/10 text-primary text-[10px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-md">
-                      Verified Member
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-400 font-semibold mt-1">{session?.user?.phone ? '+' + session.user.phone : ''}</p>
-                  <button onClick={() => supabase.auth.signOut()} className="text-xs text-primary font-bold mt-2 cursor-pointer">Log Out</button>
+                  {profEditing ? (
+                    <input
+                      value={profName}
+                      onChange={(e) => setProfName(e.target.value)}
+                      className="text-2xl font-black text-gray-800 border-b-2 border-primary focus:outline-none bg-transparent"
+                    />
+                  ) : (
+                    <h3 className="font-black text-3xl text-gray-800">{profile?.full_name || 'Add your name'}</h3>
+                  )}
+                  <p className="text-sm text-gray-500 font-medium mt-1">{session?.user?.phone ? '+' + session.user.phone : ''}</p>
+                  <button
+                    onClick={() => { if (profEditing) saveProfileName(); else { setProfName(profile?.full_name || ''); setProfEditing(true); } }}
+                    disabled={profBusy}
+                    className="mt-3 bg-primary hover:bg-primary-hover text-white font-bold text-sm px-5 py-2 rounded-full transition disabled:opacity-50"
+                  >
+                    {profBusy ? 'Saving…' : profEditing ? 'Save Profile' : 'Edit Profile'}
+                  </button>
                 </div>
               </div>
+              <button onClick={() => supabase.auth.signOut()} className="hidden md:block border border-gray-300 hover:border-red-400 hover:text-red-500 text-gray-600 font-bold text-sm px-4 py-2 rounded-xl transition">Log Out</button>
+            </div>
 
-              {/* Wallet Credits tracker */}
-              <div className="bg-amber-50 border border-amber-200/40 p-5 rounded-2xl text-center md:text-left space-y-3 shrink-0 w-full md:w-fit min-w-[200px]">
-                <div>
-                  <span className="text-[10px] font-extrabold text-amber-800 uppercase tracking-widest block leading-none mb-1">
-                    Wallet Credit Balance
-                  </span>
-                  <div className="flex items-baseline leading-none justify-center md:justify-start">
-                    <span className="text-amber-700 font-black text-3xl">{credits}</span>
-                    <span className="text-amber-600 text-xs font-bold pl-1 uppercase">Credits</span>
-                  </div>
+            {/* Stat cards */}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="bg-white rounded-3xl border border-gray-100 shadow-sm py-8 text-center">
+                <div className="text-4xl">⭐</div>
+                <div className="text-3xl font-black text-gray-800 mt-2">{credits}</div>
+                <div className="text-sm text-gray-400 font-semibold mt-1">Credits Left</div>
+              </div>
+              <button onClick={() => setCurrentTab('saved')} className="bg-white rounded-3xl border border-gray-100 shadow-sm py-8 text-center cursor-pointer hover:shadow-md transition">
+                <div className="text-4xl">🔑</div>
+                <div className="text-3xl font-black text-gray-800 mt-2">{favorites.length}</div>
+                <div className="text-sm text-gray-400 font-semibold mt-1">Saved</div>
+              </button>
+            </div>
+
+            {/* Menu rows */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm divide-y divide-gray-100 overflow-hidden">
+              <button onClick={() => setCurrentTab('list_property')} className="w-full flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition text-left">
+                <Building2 className="w-5 h-5 text-primary" />
+                <span className="font-bold text-gray-800 flex-1">My Listings</span>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </button>
+              <button onClick={() => setCurrentTab('saved')} className="w-full flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition text-left">
+                <Heart className="w-5 h-5 text-primary" />
+                <span className="font-bold text-gray-800 flex-1">Saved List</span>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </button>
+              <button onClick={() => supabase.auth.signOut()} className="w-full flex items-center gap-4 px-6 py-4 hover:bg-red-50 transition text-left">
+                <User className="w-5 h-5 text-red-500" />
+                <span className="font-bold text-red-500 flex-1">Log Out</span>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            {/* My listings manager */}
+            {myListingIds.length > 0 && (
+              <div>
+                <h4 className="font-black text-lg text-gray-800 mb-4">My Custom Listings Manager</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {properties.filter(p => myListingIds.includes(p.id)).map((myProp) => (
+                    <ListingCard
+                      key={myProp.id}
+                      property={myProp}
+                      isFavorited={favorites.includes(myProp.id)}
+                      onToggleFavorite={handleToggleFavorite}
+                      onClick={() => setSelectedProperty(myProp)}
+                    />
+                  ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={handleAddCredits}
-                  className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer shadow-xs"
-                >
-                  Replenish Credits Pak (+10 Rs. 0)
-                </button>
               </div>
-            </div>
-
-            {/* Custom landlords stats summary */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
-              <div className="p-6 bg-white border border-gray-100 shadow-3xs rounded-2xl">
-                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">短WishlistedSHORTLISTS</span>
-                <span className="text-gray-805 font-black text-2xl mt-1.5 block">{favorites.length} Items saved</span>
-                <p className="text-[11px] text-gray-400 mt-1 font-medium">Browse wishlisted items in Saved tab any time.</p>
-              </div>
-
-              <div className="p-6 bg-white border border-gray-100 shadow-3xs rounded-2xl">
-                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">Wallet Balance</span>
-                <span className="text-gray-850 font-black text-2xl mt-1.5 block">{credits} credits</span>
-                <p className="text-[11px] text-gray-400 mt-1 font-medium">Each credit unlocks one landlord's private number.</p>
-              </div>
-
-              <div className="p-6 bg-white border border-gray-100 shadow-3xs rounded-2xl">
-                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">My Custom Listings</span>
-                <span className="text-gray-850 font-black text-2xl mt-1.5 block">
-                  {properties.filter(p => myListingIds.includes(p.id)).length} Listings
-                </span>
-                <p className="text-[11px] text-gray-400 mt-1 font-medium">Custom properties listed by your credentials.</p>
-              </div>
-
-            </div>
-
-            {/* Render properties submitted by user so they can view/delete them! */}
-            <div className="space-y-4">
-              <h4 className="font-extrabold text-[15px] text-gray-800 uppercase tracking-wider">
-                My Custom Listings Manager
-              </h4>
-              <div className="bg-white border rounded-2xl p-6 shadow-2xs divide-y divide-gray-100">
-                {properties.filter(p => myListingIds.includes(p.id)).length === 0 ? (
-                  <div className="text-center py-6 text-gray-450 text-xs font-semibold">
-                    No residential properties listed by your profile yet. Click "List Property" to add!
-                  </div>
-                ) : (
-                  properties
-                    .filter(p => p.host.email === "avinashpaswan.edu@gmail.com")
-                    .map((myProp) => (
-                      <div key={myProp.id} className="py-4 first:pt-0 last:pb-0 flex justify-between items-center gap-4">
-                        <div className="flex items-center gap-3">
-                          <img 
-                            src={myProp.image} 
-                            alt={myProp.title} 
-                            className="w-12 h-10 rounded-lg object-cover" 
-                            referrerPolicy="no-referrer"
-                          />
-                          <div>
-                            <h5 className="font-bold text-sm text-gray-800">{myProp.title}</h5>
-                            <span className="text-[10px] text-gray-400 font-semibold block">{myProp.area}, {myProp.city} &bull; Rs. {myProp.price}/mo</span>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setProperties(prev => prev.filter(p => p.id !== myProp.id));
-                            alert("✓ Listing removed successfully.");
-                          }}
-                          className="p-2 text-gray-400 hover:text-primary hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                          title="Delete Listing"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    ))
-                )}
-              </div>
-            </div>
+            )}
 
           </div>
         )}
@@ -992,7 +1000,7 @@ export default function App() {
       )}
 
       {/* Bottom Sticky Footer */}
-      <footer className="bg-white border-t border-gray-100 py-12 px-4 md:px-8 max-w-[1240px] mx-auto w-full mt-12 mb-16 md:mb-0">
+      <footer className="bg-white border-t border-gray-100 py-12 px-4 md:px-8 w-full w-full mt-12 mb-16 md:mb-0">
         <div className="flex flex-col md:flex-row justify-between gap-8 items-center text-center md:text-left">
           <div className="space-y-2">
             <span className="font-sans font-black text-lg text-primary">Kotha Pasal</span>

@@ -143,7 +143,7 @@ export default function ListPropertyForm({ onAddProperty, userAvatar }: ListProp
   const handleSelectPropertyType = (hostelSelection: boolean) => {
     setIsListingHostel(hostelSelection);
     setCustomType(hostelSelection ? 'hostel' : 'room');
-    setStep(2);
+    setStep(3);
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -228,7 +228,7 @@ export default function ListPropertyForm({ onAddProperty, userAvatar }: ListProp
       {/* Step Progress indicators */}
       {step < 4 && (
         <div className="flex justify-between items-center mb-10 max-w-md mx-auto">
-          {[1, 2, 3].map((num) => (
+          {[1, 3].map((num) => (
             <div key={num} className="flex items-center gap-2">
               <div 
                 className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
@@ -244,9 +244,9 @@ export default function ListPropertyForm({ onAddProperty, userAvatar }: ListProp
               <span className={`text-xs font-bold uppercase tracking-wider hidden sm:inline ${
                 step === num ? 'text-primary' : 'text-gray-400'
               }`}>
-                {num === 1 ? 'Chooser' : num === 2 ? 'Plan' : 'Details'}
+                {num === 1 ? 'Chooser' : 'Details'}
               </span>
-              {num < 3 && <div className="w-12 h-0.5 bg-gray-100" />}
+              {num === 1 && <div className="w-12 h-0.5 bg-gray-100" />}
             </div>
           ))}
         </div>
@@ -693,7 +693,7 @@ export default function ListPropertyForm({ onAddProperty, userAvatar }: ListProp
           <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
             <button
               type="button"
-              onClick={() => setStep(2)}
+              onClick={() => setStep(1)}
               className="text-xs text-gray-500 font-bold hover:text-gray-700 cursor-pointer hover:underline"
             >
               &larr; Go Back to Pricing Tiers

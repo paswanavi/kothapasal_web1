@@ -77,15 +77,6 @@ export default function ListingCard({
           )}
         </div>
 
-        {/* Verification badge if true */}
-        {property.verified && (
-          <div className="absolute top-4 left-4 z-10">
-            <span className="bg-emerald-600 outline-none text-white font-semibold text-[10px] uppercase tracking-wider px-2 py-1 rounded-lg shadow-sm flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Verified
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Narrative & Details section */}
