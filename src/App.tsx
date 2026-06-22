@@ -21,6 +21,7 @@ import {
   Star,
   Home
 } from 'lucide-react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 import { Property, Review, PropertyType } from './types';
 import { IMAGES, NEPAL_DISTRICTS } from './mockData';
@@ -1019,7 +1020,7 @@ export default function App() {
         </div>
       </footer>
 
-
+      <SpeedInsights />
     </div>
   );
 }
