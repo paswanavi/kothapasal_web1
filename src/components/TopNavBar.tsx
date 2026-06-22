@@ -46,8 +46,10 @@ export default function TopNavBar({
           className="flex items-center gap-2 cursor-pointer group"
           onClick={() => { setCurrentTab('home'); setShowMobileMenu(false); }}
         >
-          <div className="bg-primary text-white p-2 rounded-xl shadow-md group-hover:scale-105 transition-transform">
-            <Building2 className="w-6 h-6" />
+          <div className="bg-primary w-10 h-10 rounded-2xl shadow-md group-hover:scale-105 transition-transform flex items-center justify-center">
+            <svg viewBox="0 0 24 24" className="w-6 h-6" fill="white">
+              <path d="M12 3 3 10.5V11h2v8h5v-5h4v5h5v-8h2v-.5L12 3Zm3 5.2a1 1 0 1 1 2 0V10h-2V8.2Z"/>
+            </svg>
           </div>
           <span className="font-sans text-2xl font-black text-primary tracking-tight">
             Kotha <span className="text-secondary">Pasal</span>

@@ -46,8 +46,7 @@ export default function LeftFilterSidebar({
   const categories = [
     { id: 'all', label: 'All Property Types' },
     { id: 'room', label: 'Single Rooms' },
-    { id: 'flat', label: 'Flats & Apartments' },
-    { id: 'studio', label: 'Compact Studios' }
+    { id: 'flat', label: 'Flats & Apartments' }
   ];
 
   return (

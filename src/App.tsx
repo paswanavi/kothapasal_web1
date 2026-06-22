@@ -340,12 +340,15 @@ export default function App() {
               </div>
 
               <div className="relative z-10 w-full max-w-4xl mx-auto text-center mt-6">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 backdrop-blur-xs text-primary rounded-full text-xs font-bold uppercase tracking-wider mb-4 border border-primary/20">
-                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  All 77 Districts Covered Across Nepal
-                </div>
                 <h1 className="font-sans text-3xl sm:text-5xl font-black text-gray-900 tracking-tight leading-none mb-4">
-                  Find your perfect <span className="text-primary underline decoration-wavy decoration-red-200 decoration-3">kotha</span> in Nepal
+                  Find your perfect{' '}
+                  <span
+                    className="text-primary"
+                    style={{
+                      WebkitTextStroke: '1.5px #1B3A5B',
+                      textShadow: '2px 3px 4px rgba(27,58,91,0.35)'
+                    }}
+                  >kotha</span>{' '}in Nepal
                 </h1>
                 <p className="font-sans font-medium text-base sm:text-lg text-gray-700 max-w-2xl mx-auto mb-10 leading-relaxed">
                   Verified student hostels, single rooms, sharing plans, and spacious apartments. List free or find verified hosts today.
@@ -379,7 +382,6 @@ export default function App() {
                       <option value="room">Single Rooms</option>
                       <option value="flat">Apartments & Flats</option>
                       <option value="hostel">Student Hostel</option>
-                      <option value="studio">Studio Rooms</option>
                     </select>
                   </div>
 
@@ -455,17 +457,6 @@ export default function App() {
                   <span className="text-[11px] text-gray-400 font-medium mt-1">Food + Laundry included</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => { setSelectedRoomType('studio'); setCurrentTab('explore'); }}
-                  className="p-5 bg-white hover:bg-red-50/10 border border-gray-100 hover:border-primary rounded-2xl shadow-2xs hover:shadow-md transition-all text-center flex flex-col items-center cursor-pointer group"
-                >
-                  <div className="w-12 h-12 bg-yellow-50 text-yellow-800 rounded-full flex items-center justify-center group-hover:scale-105 transition-transform mb-3">
-                    <Sparkles className="w-6 h-6" />
-                  </div>
-                  <span className="font-bold text-[14px] text-gray-800 block">Compact Studios</span>
-                  <span className="text-[11px] text-gray-400 font-medium mt-1">High-end cozy setups</span>
-                </button>
 
               </div>
             </section>
