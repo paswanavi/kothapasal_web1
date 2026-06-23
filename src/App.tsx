@@ -39,6 +39,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 export default function App() {
   // Main states
   const [properties, setProperties] = useState<Property[]>([]);
+  const [hostels, setHostels] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState<boolean>(true);
   // URL-driven tabs (real sub-directories, refresh-safe)
   const navigate = useNavigate();
@@ -120,6 +121,9 @@ export default function App() {
       .then(props => { if (active) setProperties(props); })
       .catch(err => console.error('Load failed:', err))
       .finally(() => { if (active) setLoadingData(false); });
+    // Load custom hostels (separate table from listings)
+    supabase.from('hostels').select('*').order('created_at', { ascending: false })
+      .then(({ data }) => { if (active) setHostels(data || []); });
     // Optional: if logged in, load credits + favorites from Supabase
     (async () => {
       const { data } = await supabase.auth.getSession();
@@ -339,10 +343,11 @@ export default function App() {
 
   // Filtered lists specifically for student hostels tab
   const filteredHostels = useMemo(() => {
-    return properties.filter(prop => {
-      return prop.type === 'hostel' && prop.genderSpecific === hostelGenderFilter;
-    });
-  }, [properties, hostelGenderFilter]);
+    const want = hostelGenderFilter === 'boys' ? 'boys' : 'girls';
+    return hostels.filter(h =>
+      (h.hostel_type || '').toLowerCase().includes(want)
+    );
+  }, [hostels, hostelGenderFilter]);
 
   // Featured lists for Home view slider
   const featuredKathmandu = useMemo(() => {
@@ -379,14 +384,14 @@ export default function App() {
             {/* Elegant Hero segment with custom Nepalese backdrop */}
             <section className="relative min-h-[580px] flex flex-col justify-center items-center px-4 md:px-8 pt-12 pb-20">
               <div className="absolute inset-0 z-0 overflow-hidden">
-                <img 
-                  alt="Neat Nepali house cozy bedroom room with views of mountains" 
-                  className="w-full h-full object-cover opacity-85 brightness-95" 
-                  src={properties.find(p => p.type !== 'hostel' && p.image && !p.image.includes('unsplash'))?.image || IMAGES.heroBg}
+                <img
+                  alt="Kotha Pasal Nepal — temples, Himalayas and city skyline"
+                  className="w-full h-full object-contain"
+                  src="/hero-nepal.png"
                   referrerPolicy="no-referrer"
                 />
-                {/* Visual gradient overlay matching 'Namaste Warmth' */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-surface-bg/40 to-surface-bg" />
+                {/* Soft fade into page below so the illustration blends */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-surface-bg" />
               </div>
 
               <div className="relative z-10 w-full max-w-4xl mx-auto text-center mt-6 rounded-3xl bg-white/35 backdrop-blur-xl border border-white/40 shadow-[0_8px_40px_rgba(0,0,0,0.12)] px-6 py-10 md:px-12 md:py-12">
@@ -553,15 +558,6 @@ export default function App() {
                     />
                   </div>
                 ))}
-              </div>
-            </section>
-
-            {/* Ad Banner Slot */}
-            <section className="w-full px-4 md:px-8">
-              <div className="w-full bg-gray-100 rounded-2xl flex items-center justify-center min-h-[100px] border border-gray-200 shadow-inner relative overflow-hidden p-4">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block text-center">
-                  📢 Sponsorship Banner: Top Colleges and hostels associate programs. Contact support to sponsor.
-                </span>
               </div>
             </section>
 
@@ -768,83 +764,50 @@ export default function App() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredHostels.map((prop) => (
+                {filteredHostels.map((h) => (
                   <div
-                    key={prop.id}
-                    onClick={() => navigate(`/hostel/${prop.id}`)}
+                    key={h.id}
+                    onClick={() => navigate(`/hostel/${h.id}`)}
                     className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-lg overflow-hidden flex flex-col group cursor-pointer transition-all pb-4 relative"
                   >
-                    
                     {/* Header Image */}
                     <div className="h-52 relative p-2.5 pb-0">
-                      <div className="rounded-2xl overflow-hidden h-full">
-                        <img 
-                          src={prop.image} 
-                          alt={prop.title} 
-                          className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                          referrerPolicy="no-referrer"
-                        />
+                      <div className="rounded-2xl overflow-hidden h-full bg-gray-100">
+                        {h.cover_photo ? (
+                          <img
+                            src={h.cover_photo}
+                            alt={h.name}
+                            className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="w-full h-full grid place-items-center text-5xl">🏢</div>
+                        )}
                       </div>
-                      {(prop.hostelSeaterOptions?.length ?? 0) > 0 && (
-                        <span className="absolute bottom-4 left-6 bg-white/95 px-3 py-1 rounded-xl text-[10.5px] font-bold text-gray-700 shadow-md border border-gray-50 uppercase tracking-widest flex items-center gap-1">
-                          <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                          {prop.hostelSeaterOptions!.length} Available Room{prop.hostelSeaterOptions!.length > 1 ? 's' : ''}
-                        </span>
-                      )}
                     </div>
 
                     {/* Meta details */}
                     <div className="p-5 flex-grow flex flex-col justify-between">
                       <div className="space-y-2">
                         <h3 className="font-extrabold text-lg text-gray-800 tracking-tight leading-snug group-hover:text-primary transition-colors">
-                          {prop.title}
+                          {h.name}
                         </h3>
                         <p className="text-xs text-gray-400 font-bold flex items-center gap-1">
                           <MapPin className="w-3.5 h-3.5 shrink-0" />
-                          {prop.area}, {prop.city}
+                          {h.location}
                         </p>
-
-                        {/* Amenities tags */}
-                        <div className="flex flex-wrap gap-1.5 pt-2">
-                          {prop.amenities.map(name => (
-                            <span 
-                              key={`${prop.id}-${name}`}
-                              className="text-[9.5px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100 uppercase"
-                            >
-                              {name}
-                            </span>
-                          ))}
-                        </div>
+                        <span className="inline-block text-[9.5px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100 uppercase">
+                          {h.hostel_type}
+                        </span>
                       </div>
-
-                      {/* Seaters table representation */}
-                      {prop.hostelSeaterOptions && (
-                        <div className="pt-4 border-t border-gray-100 mt-5 space-y-2 leading-none">
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pricing Matrix:</p>
-                          <div className="space-y-1.5 text-xs text-gray-600 font-semibold pt-1">
-                            {prop.hostelSeaterOptions.map((opt, i) => (
-                              <div key={`${opt.seater}-${i}`} className="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-100 shadow-3xs">
-                                <span>{opt.seater} Accommodation</span>
-                                <span className="font-bold text-primary">Rs. {opt.price.toLocaleString('en-IN')}/mo</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
                     </div>
 
                     {/* Bottom detail trigger */}
-                    <div className="px-5 pt-3 border-t border-gray-50 flex items-center justify-between">
-                      <div className="flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded text-amber-700 font-mono text-xs font-bold leading-none">
-                        <Star className="w-3" />
-                        <span>{prop.rating.toFixed(1)}</span>
-                      </div>
+                    <div className="px-5 pt-3 border-t border-gray-50 flex items-center justify-end">
                       <span className="text-xs font-bold text-primary group-hover:underline uppercase tracking-wide">
-                        Contact Warden &rarr;
+                        View Rooms &rarr;
                       </span>
                     </div>
-
                   </div>
                 ))}
               </div>

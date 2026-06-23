@@ -17,6 +17,8 @@ import {
   Heart,
   ThumbsUp,
   Award,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { Property, Review } from '../types';
 import { IMAGES } from '../mockData';
@@ -41,7 +43,22 @@ export default function PropertyDetailModal({
   onAddReview
 }: PropertyDetailModalProps) {
   const [revealed, setRevealed] = useState(false);
-  const [activeImage, setActiveImage] = useState(property.image);
+  const photos: string[] = (property.imagesList && property.imagesList.length)
+    ? property.imagesList
+    : (property.image ? [property.image] : []);
+  const [imgIdx, setImgIdx] = useState(0);
+  const goImg = (dir: 1 | -1) =>
+    setImgIdx(i => (i + dir + photos.length) % photos.length);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (photos.length < 2) return;
+      if (e.key === 'ArrowRight') setImgIdx(i => (i + 1) % photos.length);
+      if (e.key === 'ArrowLeft') setImgIdx(i => (i - 1 + photos.length) % photos.length);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [photos.length]);
 
   // Live rating from Supabase
   const [myStars, setMyStars] = useState(0);
@@ -174,42 +191,64 @@ export default function PropertyDetailModal({
           </div>
         </div>
 
-        {/* Bento Image Gallery */}
+        {/* Photo carousel — arrows + keyboard nav */}
         <div className="p-4 md:p-8">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 h-[280px] md:h-[350px]">
-            {/* Main Active Image (Left side 3cols) */}
-            <div className="md:col-span-3 h-full relative overflow-hidden rounded-2xl group border border-gray-200 bg-gray-900">
-              <img 
-                src={activeImage} 
-                alt="Active Preview" 
+          <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-gray-900 h-[300px] md:h-[440px] group">
+            {photos.length > 0 ? (
+              <img
+                src={photos[imgIdx]}
+                alt={`Photo ${imgIdx + 1}`}
                 className="w-full h-full object-contain transition-all"
                 referrerPolicy="no-referrer"
               />
-            </div>
-            
-            {/* Thumbnails list on the right */}
-            <div className="md:col-span-2 grid grid-cols-4 md:grid-cols-2 gap-2 h-full">
-              {property.imagesList.slice(0, 4).map((img, idx) => (
+            ) : (
+              <div className="w-full h-full grid place-items-center text-5xl text-white/40">🏠</div>
+            )}
+
+            {photos.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => goImg(-1)}
+                  aria-label="Previous photo"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2.5 transition-all"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goImg(1)}
+                  aria-label="Next photo"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2.5 transition-all"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+                <div className="absolute top-3 right-3 bg-black/60 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  {imgIdx + 1} / {photos.length}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Thumbnail strip */}
+          {photos.length > 1 && (
+            <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+              {photos.map((img, idx) => (
                 <button
                   key={`${img}-${idx}`}
                   type="button"
-                  onClick={() => setActiveImage(img)}
-                  className={`relative overflow-hidden rounded-xl h-full w-full cursor-pointer transition-all ${
-                    activeImage === img 
-                      ? 'ring-4 ring-primary ring-offset-2' 
-                      : 'hover:opacity-90 border border-gray-100'
+                  onClick={() => setImgIdx(idx)}
+                  className={`relative shrink-0 w-20 h-16 overflow-hidden rounded-xl cursor-pointer transition-all bg-gray-900 ${
+                    imgIdx === idx
+                      ? 'ring-3 ring-primary ring-offset-2'
+                      : 'opacity-70 hover:opacity-100 border border-gray-100'
                   }`}
                 >
-                  <img src={img} alt="Thumbnail" className="w-full h-full object-contain bg-gray-900" referrerPolicy="no-referrer" />
-                  {idx === 3 && property.imagesList.length > 4 && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-xs font-bold uppercase tracking-wider">
-                      +{property.imagesList.length - 4} Photos
-                    </div>
-                  )}
+                  <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 </button>
               ))}
             </div>
-          </div>
+          )}
         </div>
 
         {/* Double Column content layout */}
