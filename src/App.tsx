@@ -34,12 +34,27 @@ import ListPropertyForm from './components/ListPropertyForm';
 import Login from './components/Login';
 import HostelManager from './components/HostelManager';
 import HostelPage from './components/HostelPage';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function App() {
   // Main states
   const [properties, setProperties] = useState<Property[]>([]);
   const [loadingData, setLoadingData] = useState<boolean>(true);
-  const [currentTab, setCurrentTab] = useState<string>('home'); // home | explore | hostels | list_property | saved | profile
+  // URL-driven tabs (real sub-directories, refresh-safe)
+  const navigate = useNavigate();
+  const location = useLocation();
+  const PATH_TO_TAB: Record<string, string> = {
+    '/': 'home', '/explore': 'explore', '/hostels': 'hostels',
+    '/list': 'list_property', '/saved': 'saved', '/profile': 'profile',
+  };
+  const TAB_TO_PATH: Record<string, string> = {
+    home: '/', explore: '/explore', hostels: '/hostels',
+    list_property: '/list', saved: '/saved', profile: '/profile',
+  };
+  const hostelMatch = location.pathname.match(/^\/hostel\/(.+)$/);
+  const hostelIdParam = hostelMatch ? decodeURIComponent(hostelMatch[1]) : null;
+  const currentTab = hostelIdParam ? 'hostels' : (PATH_TO_TAB[location.pathname] || 'home');
+  const setCurrentTab = (t: string) => navigate(TAB_TO_PATH[t] || '/');
 
   // User states
   const [credits, setCredits] = useState<number>(0);
@@ -126,7 +141,6 @@ export default function App() {
 
   // Interactive detail overlay
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [selectedHostel, setSelectedHostel] = useState<Property | null>(null);
 
   // Home search bar entries (local to home but updates filters on click)
   const [homeLocation, setHomeLocation] = useState<string>('');
@@ -334,9 +348,9 @@ export default function App() {
 
   if (!authReady) return null;
   if (!session) return <Login />;
-  if (selectedHostel) return (
+  if (hostelIdParam) return (
     <div className="min-h-screen bg-surface-bg">
-      <HostelPage hostel={selectedHostel} onBack={() => setSelectedHostel(null)} />
+      <HostelPage hostelId={hostelIdParam} onBack={() => navigate('/hostels')} />
     </div>
   );
 
@@ -742,7 +756,7 @@ export default function App() {
                 {filteredHostels.map((prop) => (
                   <div
                     key={prop.id}
-                    onClick={() => setSelectedHostel(prop)}
+                    onClick={() => navigate(`/hostel/${prop.id}`)}
                     className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-lg overflow-hidden flex flex-col group cursor-pointer transition-all pb-4 relative"
                   >
                     

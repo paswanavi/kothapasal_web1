@@ -1,26 +1,41 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, MapPin, Phone, BedDouble, Star } from 'lucide-react';
-import { Property } from '../types';
 import { supabase } from '../supabaseClient';
 
 interface Props {
-  hostel: Property;          // hostel.id === hostels.id
+  hostelId: string;          // hostels.id — fetched directly so deep-links / refresh work
   onBack: () => void;
 }
 
-export default function HostelPage({ hostel, onBack }: Props) {
+export default function HostelPage({ hostelId, onBack }: Props) {
+  const [hostel, setHostel] = useState<any>(null);
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
     (async () => {
+      setLoading(true);
+      const { data: h } = await supabase.from('hostels').select('*').eq('id', hostelId).single();
+      setHostel(h);
       const { data } = await supabase.from('hostel_rooms').select('*')
-        .eq('hostel_id', hostel.id).order('created_at', { ascending: false });
+        .eq('hostel_id', hostelId).order('created_at', { ascending: false });
       setRooms(data || []);
       setLoading(false);
     })();
-  }, [hostel.id]);
+  }, [hostelId]);
+
+  if (loading && !hostel) {
+    return <div className="w-full text-center py-24 text-gray-400">Loading hostel…</div>;
+  }
+  if (!hostel) {
+    return (
+      <div className="w-full text-center py-24">
+        <p className="text-gray-500 mb-4">Hostel not found.</p>
+        <button onClick={onBack} className="text-primary font-bold">← Back to Hostels</button>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full px-4 md:px-8 py-8 max-w-5xl mx-auto animate-in fade-in duration-300">
@@ -29,26 +44,23 @@ export default function HostelPage({ hostel, onBack }: Props) {
       </button>
 
       {/* Cover */}
-      <div className="rounded-3xl overflow-hidden h-64 md:h-80 shadow-sm">
-        <img src={hostel.image} alt={hostel.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+      <div className="rounded-3xl overflow-hidden h-64 md:h-80 shadow-sm bg-gray-100">
+        {hostel.cover_photo
+          ? <img src={hostel.cover_photo} alt={hostel.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+          : <div className="w-full h-full grid place-items-center text-5xl">🏢</div>}
       </div>
 
       {/* Header */}
       <div className="mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-gray-900">{hostel.title}</h1>
+          <h1 className="text-3xl font-black text-gray-900">{hostel.name}</h1>
           <p className="text-gray-500 font-semibold flex items-center gap-1 mt-1">
-            <MapPin className="w-4 h-4" /> {hostel.area}, {hostel.city}
+            <MapPin className="w-4 h-4" /> {hostel.location}
           </p>
           <div className="flex items-center gap-2 mt-2">
             <span className="chip" style={{ background: 'color-mix(in srgb, var(--color-secondary) 16%, transparent)' }}>
-              {hostel.genderSpecific === 'girls' ? 'Girls Hostel' : 'Boys Hostel'}
+              {hostel.hostel_type}
             </span>
-            {hostel.rating > 0 && (
-              <span className="inline-flex items-center gap-1 text-amber-600 font-bold text-sm">
-                <Star className="w-4 h-4 fill-amber-500 text-amber-500" /> {hostel.rating.toFixed(1)}
-              </span>
-            )}
           </div>
         </div>
         <button
@@ -56,21 +68,9 @@ export default function HostelPage({ hostel, onBack }: Props) {
           className="bg-primary hover:bg-primary-hover text-white font-bold px-6 py-3 rounded-full inline-flex items-center gap-2 shadow-md self-start"
         >
           <Phone className="w-4 h-4" />
-          {revealed ? (hostel.host.phone || 'No phone') : 'Contact Hostel Owner'}
+          {revealed ? (hostel.contact_phone || 'No phone') : 'Contact Hostel Owner'}
         </button>
       </div>
-
-      {/* Amenities */}
-      {hostel.amenities.length > 0 && (
-        <div className="mt-6">
-          <h3 className="font-black text-lg text-gray-800 mb-2">Amenities</h3>
-          <div className="flex flex-wrap gap-2">
-            {hostel.amenities.map(a => (
-              <span key={a} className="text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100">{a}</span>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Rooms */}
       <h3 className="font-black text-xl text-gray-800 mt-8 mb-4">Available Rooms ({rooms.length})</h3>
