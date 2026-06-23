@@ -12,6 +12,7 @@ export default function HostelPage({ hostelId, onBack }: Props) {
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [revealed, setRevealed] = useState(false);
+  const [room, setRoom] = useState<any>(null);  // selected room for detail card
 
   useEffect(() => {
     (async () => {
@@ -38,7 +39,7 @@ export default function HostelPage({ hostelId, onBack }: Props) {
   }
 
   return (
-    <div className="w-full px-4 md:px-8 py-8 max-w-5xl mx-auto animate-in fade-in duration-300">
+    <div className="w-full px-4 md:px-8 py-8 animate-in fade-in duration-300">
       <button onClick={onBack} className="inline-flex items-center gap-2 text-gray-600 hover:text-primary font-bold mb-5">
         <ArrowLeft className="w-4 h-4" /> Back to Hostels
       </button>
@@ -83,7 +84,7 @@ export default function HostelPage({ hostelId, onBack }: Props) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {rooms.map(r => (
-            <div key={r.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div key={r.id} onClick={() => setRoom(r)} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition">
               {r.photos?.[0]
                 ? <img src={r.photos[0]} className="w-full h-44 object-cover" referrerPolicy="no-referrer" />
                 : <div className="w-full h-44 bg-gray-100 grid place-items-center text-3xl">🛏️</div>}
@@ -104,6 +105,43 @@ export default function HostelPage({ hostelId, onBack }: Props) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Room detail card */}
+      {room && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setRoom(null)}>
+          <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+            {room.photos?.length ? (
+              <div className="flex gap-1 overflow-x-auto">
+                {room.photos.map((p: string, i: number) => (
+                  <img key={i} src={p} className="h-56 w-full object-cover flex-shrink-0" referrerPolicy="no-referrer" />
+                ))}
+              </div>
+            ) : <div className="h-56 bg-gray-100 grid place-items-center text-4xl">🛏️</div>}
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <span className="text-primary font-black text-2xl">Rs. {Math.round(room.price)}/mo</span>
+                <span className={`badge ${room.status === 'TAKEN' ? 'taken' : 'avail'}`}>{room.status}</span>
+              </div>
+              <h3 className="text-xl font-black text-gray-900 mt-1">{room.title}</h3>
+              <p className="text-gray-500 flex items-center gap-1 mt-1"><BedDouble className="w-4 h-4" /> {room.accommodation}</p>
+              {Array.isArray(room.amenities) && room.amenities.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {room.amenities.map((a: string) => (
+                    <span key={a} className="text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100">{a}</span>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={() => { const ph = (hostel.contact_phone || '').replace(/\s/g, ''); if (ph) window.location.href = `tel:${ph}`; }}
+                className="mt-6 w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 rounded-full inline-flex items-center justify-center gap-2"
+              >
+                <Phone className="w-4 h-4" /> Contact Hostel Owner
+              </button>
+              <button onClick={() => setRoom(null)} className="mt-2 w-full text-gray-500 font-semibold py-2">Close</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

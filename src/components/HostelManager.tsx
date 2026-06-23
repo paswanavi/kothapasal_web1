@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase, uploadImage } from '../supabaseClient';
-import { Building2, PlusCircle, BedDouble, Phone } from 'lucide-react';
+import { Building2, PlusCircle, BedDouble, Phone, Camera } from 'lucide-react';
 
 const CITIES = ['Kathmandu','Lalitpur','Bhaktapur','Kaski','Chitwan','Morang','Rupandehi','Sunsari','Jhapa','Makwanpur'];
 const SHARING = ['1 Seater','2 Seater','3 Seater'];
@@ -109,7 +109,14 @@ function CreateHostel({ userId, onDone, onCancel }: { userId: string; onDone: ()
   return (
     <div className="bg-white border-2 border-primary/20 rounded-2xl p-5 space-y-3">
       <h3 className="font-black text-lg">New Hostel</h3>
-      <input type="file" accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} className="text-sm" />
+      <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-6 cursor-pointer hover:bg-gray-50">
+        {file ? (
+          <img src={URL.createObjectURL(file)} className="h-24 rounded-lg object-cover" />
+        ) : (
+          <><Camera className="w-7 h-7 text-primary" /><span className="text-sm font-semibold text-gray-600">Upload cover photo</span></>
+        )}
+        <input type="file" accept="image/*" className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
+      </label>
       <input className="w-full border rounded-xl px-4 py-2.5" placeholder="Hostel Name" value={f.name} onChange={e => set('name', e.target.value)} />
       <div className="grid grid-cols-2 gap-3">
         <select className="border rounded-xl px-4 py-2.5" value={f.city} onChange={e => set('city', e.target.value)}>{CITIES.map(c => <option key={c}>{c}</option>)}</select>
@@ -155,7 +162,11 @@ function AddRoom({ hostelId, userId, onDone }: { hostelId: string; userId: strin
   return (
     <div className="mt-4 border-t border-gray-100 pt-4 space-y-3">
       <h4 className="font-bold text-sm flex items-center gap-1"><BedDouble className="w-4 h-4 text-primary" /> Add a room</h4>
-      <input type="file" accept="image/*" multiple onChange={e => setFiles([...(e.target.files || [])].slice(0, 3))} className="text-sm" />
+      <label className="flex items-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-3 px-4 cursor-pointer hover:bg-gray-50 w-fit">
+        <Camera className="w-5 h-5 text-primary" />
+        <span className="text-sm font-semibold text-gray-600">{files.length ? `${files.length} photo(s) selected` : 'Upload room photos (up to 3)'}</span>
+        <input type="file" accept="image/*" multiple className="hidden" onChange={e => setFiles([...(e.target.files || [])].slice(0, 3))} />
+      </label>
       <div className="grid grid-cols-3 gap-3">
         <input className="border rounded-xl px-3 py-2 col-span-2" placeholder="Room title" value={f.title} onChange={e => set('title', e.target.value)} />
         <select className="border rounded-xl px-3 py-2" value={f.sharing} onChange={e => set('sharing', e.target.value)}>{SHARING.map(s => <option key={s}>{s}</option>)}</select>

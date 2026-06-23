@@ -39,7 +39,7 @@ export default function TopNavBar({
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all h-20">
-      <div className="max-w-[1240px] h-full mx-auto px-4 md:px-8 flex justify-between items-center">
+      <div className="w-full h-full px-4 md:px-8 flex justify-between items-center">
         
         {/* Brand Logo */}
         <div 

@@ -45,11 +45,11 @@ export default function App() {
   const location = useLocation();
   const PATH_TO_TAB: Record<string, string> = {
     '/': 'home', '/explore': 'explore', '/hostels': 'hostels',
-    '/list': 'list_property', '/saved': 'saved', '/profile': 'profile',
+    '/list': 'list_property', '/saved': 'saved', '/profile': 'profile', '/unlocked': 'unlocked',
   };
   const TAB_TO_PATH: Record<string, string> = {
     home: '/', explore: '/explore', hostels: '/hostels',
-    list_property: '/list', saved: '/saved', profile: '/profile',
+    list_property: '/list', saved: '/saved', profile: '/profile', unlocked: '/unlocked',
   };
   const hostelMatch = location.pathname.match(/^\/hostel\/(.+)$/);
   const hostelIdParam = hostelMatch ? decodeURIComponent(hostelMatch[1]) : null;
@@ -65,6 +65,7 @@ export default function App() {
   const [authReady, setAuthReady] = useState<boolean>(false);
   const [profile, setProfile] = useState<any>(null);
   const [myListingIds, setMyListingIds] = useState<string[]>([]);
+  const [unlockedIds, setUnlockedIds] = useState<string[]>([]);
   const [listMode, setListMode] = useState<'room' | 'hostel'>('room');
   const [profEditing, setProfEditing] = useState(false);
   const [profName, setProfName] = useState('');
@@ -98,6 +99,8 @@ export default function App() {
     setMyListingIds((mine || []).map((r: any) => r.id));
     const { data: sl } = await supabase.from('saved_listings').select('listing_id').eq('user_id', uid);
     if (sl) setFavorites(sl.map((s: any) => s.listing_id));
+    const { data: ul } = await supabase.from('unlocked_listings').select('listing_id').eq('user_id', uid);
+    setUnlockedIds((ul || []).map((u: any) => u.listing_id));
   };
 
   useEffect(() => {
@@ -386,7 +389,7 @@ export default function App() {
                 <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-surface-bg/40 to-surface-bg" />
               </div>
 
-              <div className="relative z-10 w-full max-w-4xl mx-auto text-center mt-6">
+              <div className="relative z-10 w-full max-w-4xl mx-auto text-center mt-6 rounded-3xl bg-white/35 backdrop-blur-xl border border-white/40 shadow-[0_8px_40px_rgba(0,0,0,0.12)] px-6 py-10 md:px-12 md:py-12">
                 <h1 className="font-sans text-3xl sm:text-5xl font-black text-gray-900 tracking-tight leading-none mb-4">
                   Find your perfect{' '}
                   <span
@@ -478,6 +481,18 @@ export default function App() {
                   </div>
                   <span className="font-bold text-[14px] text-gray-800 block">Single Kotha</span>
                   <span className="text-[11px] text-gray-400 font-medium mt-1">Starting from Rs. 4,500</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setSelectedRoomType('shared'); setCurrentTab('explore'); }}
+                  className="p-5 bg-white hover:bg-red-50/10 border border-gray-100 hover:border-primary rounded-2xl shadow-2xs hover:shadow-md transition-all text-center flex flex-col items-center cursor-pointer group"
+                >
+                  <div className="w-12 h-12 bg-amber-50 text-amber-700 rounded-full flex items-center justify-center group-hover:scale-105 transition-transform mb-3">
+                    <Bed className="w-6 h-6" />
+                  </div>
+                  <span className="font-bold text-[14px] text-gray-800 block">Double Kotha</span>
+                  <span className="text-[11px] text-gray-400 font-medium mt-1">Shared / twin rooms</span>
                 </button>
 
                 <button
@@ -904,9 +919,33 @@ export default function App() {
           </div>
         )}
 
+        {/* UNLOCKED ROOMS */}
+        {currentTab === 'unlocked' && (
+          <div className="w-full px-4 md:px-8 py-8 space-y-6 animate-in fade-in duration-300">
+            <h2 className="font-black text-2xl text-gray-800">Unlocked Rooms</h2>
+            {properties.filter(p => unlockedIds.includes(p.id)).length === 0 ? (
+              <div className="bg-white border border-gray-100 rounded-2xl p-10 text-center text-gray-400 font-semibold">
+                No unlocked rooms yet. Spend a credit on a room to reveal the owner's contact.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {properties.filter(p => unlockedIds.includes(p.id)).map(p => (
+                  <ListingCard
+                    key={p.id}
+                    property={p}
+                    isFavorited={favorites.includes(p.id)}
+                    onToggleFavorite={handleToggleFavorite}
+                    onClick={() => setSelectedProperty(p)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* VIEW 6: USER PROFILE DASHBOARD */}
         {currentTab === 'profile' && (
-          <div className="w-full px-4 md:px-8 py-8 space-y-6 animate-in fade-in duration-300 max-w-3xl mx-auto">
+          <div className="w-full px-4 md:px-8 py-8 space-y-6 animate-in fade-in duration-300 ">
 
             {/* Profile header card */}
             <div className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 shadow-sm flex items-center justify-between gap-6">
@@ -951,10 +990,10 @@ export default function App() {
                 <div className="text-3xl font-black text-gray-800 mt-2">{credits}</div>
                 <div className="text-sm text-gray-400 font-semibold mt-1">Credits Left</div>
               </div>
-              <button onClick={() => setCurrentTab('saved')} className="bg-white rounded-3xl border border-gray-100 shadow-sm py-8 text-center cursor-pointer hover:shadow-md transition">
+              <button onClick={() => setCurrentTab('unlocked')} className="bg-white rounded-3xl border border-gray-100 shadow-sm py-8 text-center cursor-pointer hover:shadow-md transition">
                 <div className="text-4xl">🔑</div>
-                <div className="text-3xl font-black text-gray-800 mt-2">{favorites.length}</div>
-                <div className="text-sm text-gray-400 font-semibold mt-1">Saved</div>
+                <div className="text-3xl font-black text-gray-800 mt-2">{unlockedIds.length}</div>
+                <div className="text-sm text-gray-400 font-semibold mt-1">Unlocked</div>
               </button>
             </div>
 
