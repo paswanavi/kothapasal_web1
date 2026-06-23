@@ -305,3 +305,31 @@ export const NEPAL_DISTRICTS = [
   "Jhapa",
   "Makwanpur"
 ];
+
+export const NEPAL_CITIES = [
+  "Kathmandu",
+  "Patan",
+  "Bhaktapur",
+  "Kirtipur",
+  "Baneshwor",
+  "Putalisadak",
+  "Lazimpat",
+  "Thamel",
+  "Chabahil",
+  "Budhanilkantha",
+  "Koteshwor",
+  "Balaju",
+  "Sitapaila",
+  "Pokhara",
+  "Chitwan",
+  "Bharatpur",
+  "Hetauda",
+  "Butwal",
+  "Biratnagar",
+  "Birgunj",
+  "Dharan",
+  "Nepalgunj",
+  "Bhairahawa",
+  "Itahari",
+  "Dhangadhi"
+];

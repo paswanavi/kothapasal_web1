@@ -1,4 +1,4 @@
-export type PropertyType = 'room' | 'flat' | 'hostel' | 'studio' | 'shared';
+export type PropertyType = 'room' | 'double' | 'threebhk' | 'flat' | 'hostel' | 'studio' | 'office';
 
 export interface Host {
   name: string;

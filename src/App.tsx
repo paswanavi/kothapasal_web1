@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 import { Property, Review, PropertyType } from './types';
-import { IMAGES, NEPAL_DISTRICTS } from './mockData';
+import { IMAGES, NEPAL_CITIES } from './mockData';
 import { fetchProperties } from './data';
 import { supabase, uploadImage } from './supabaseClient';
 import TopNavBar from './components/TopNavBar';
@@ -294,7 +294,7 @@ export default function App() {
 
       // 2. Specific District select
       if (selectedDistrict !== 'all') {
-        if (prop.district !== selectedDistrict) return false;
+        if (prop.city !== selectedDistrict) return false;
       }
 
       // 3. Room Type select
@@ -382,7 +382,7 @@ export default function App() {
                 <img 
                   alt="Neat Nepali house cozy bedroom room with views of mountains" 
                   className="w-full h-full object-cover opacity-85 brightness-95" 
-                  src={IMAGES.heroBg}
+                  src={properties.find(p => p.type !== 'hostel' && p.image && !p.image.includes('unsplash'))?.image || IMAGES.heroBg}
                   referrerPolicy="no-referrer"
                 />
                 {/* Visual gradient overlay matching 'Namaste Warmth' */}
@@ -416,7 +416,7 @@ export default function App() {
                       className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-sm font-semibold text-gray-800 p-0 cursor-pointer appearance-none"
                     >
                       <option value="">All Cities</option>
-                      {NEPAL_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+                      {NEPAL_CITIES.map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
                   </div>
 

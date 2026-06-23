@@ -1,6 +1,6 @@
 import React from 'react';
 import { Filter, RotateCcw, X } from 'lucide-react';
-import { NEPAL_DISTRICTS } from '../mockData';
+import { NEPAL_CITIES } from '../mockData';
 
 interface LeftFilterSidebarProps {
   district: string;
@@ -45,8 +45,12 @@ export default function LeftFilterSidebar({
 
   const categories = [
     { id: 'all', label: 'All Property Types' },
-    { id: 'room', label: 'Single Rooms' },
-    { id: 'flat', label: 'Flats & Apartments' }
+    { id: 'room', label: 'Single Room (Single Kotha)' },
+    { id: 'double', label: 'Double Room (Double Kotha)' },
+    { id: 'threebhk', label: '3BHK' },
+    { id: 'flat', label: 'Flat / Apartment' },
+    { id: 'studio', label: 'Studio' },
+    { id: 'office', label: 'Office Space' },
   ];
 
   return (
@@ -68,10 +72,10 @@ export default function LeftFilterSidebar({
         </button>
       </div>
 
-      {/* City or District selector */}
+      {/* City selector */}
       <div className="mb-6">
         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-          District / Location
+          City / Location
         </label>
         <select
           value={district}
@@ -79,8 +83,8 @@ export default function LeftFilterSidebar({
           className="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-100 rounded-xl text-sm font-medium transition-all"
         >
           <option value="all">Everywhere in Nepal</option>
-          {NEPAL_DISTRICTS.map(dist => (
-            <option key={dist} value={dist}>{dist}</option>
+          {NEPAL_CITIES.map(city => (
+            <option key={city} value={city}>{city}</option>
           ))}
         </select>
       </div>

@@ -1,25 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { 
-  X, 
-  MapPin, 
-  Star, 
-  ShieldCheck, 
-  Wifi, 
-  Utensils, 
-  Droplet, 
-  Eye, 
-  Zap, 
-  Sun, 
-  Car, 
-  Coins, 
-  Phone, 
-  Mail, 
-  Heart, 
-  MessageSquare,
+import {
+  X,
+  MapPin,
+  Star,
+  ShieldCheck,
+  Wifi,
+  Utensils,
+  Droplet,
+  Eye,
+  Zap,
+  Sun,
+  Car,
+  Coins,
+  Phone,
+  Heart,
   ThumbsUp,
   Award,
-  Send
 } from 'lucide-react';
 import { Property, Review } from '../types';
 import { IMAGES } from '../mockData';
@@ -86,10 +83,6 @@ export default function PropertyDetailModal({
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [reviewSubmitSuccess, setReviewSubmitSuccess] = useState(false);
 
-  // Message host state
-  const [messageHostText, setMessageHostText] = useState('');
-  const [messageHostSuccess, setMessageHostSuccess] = useState(false);
-
   const handleRevealContact = () => {
     if (revealed) return;
     const success = onDeductCredit(property.id);
@@ -119,14 +112,6 @@ export default function PropertyDetailModal({
     setNewReviewRating(5);
     setReviewSubmitSuccess(true);
     setTimeout(() => setReviewSubmitSuccess(false), 3000);
-  };
-
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageHostText.trim()) return;
-    setMessageHostSuccess(true);
-    setMessageHostText('');
-    setTimeout(() => setMessageHostSuccess(false), 4000);
   };
 
   // Maps amenity strings to beautiful Lucide icons
@@ -193,11 +178,11 @@ export default function PropertyDetailModal({
         <div className="p-4 md:p-8">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3 h-[280px] md:h-[350px]">
             {/* Main Active Image (Left side 3cols) */}
-            <div className="md:col-span-3 h-full relative overflow-hidden rounded-2xl group border border-gray-200 bg-gray-100">
+            <div className="md:col-span-3 h-full relative overflow-hidden rounded-2xl group border border-gray-200 bg-gray-900">
               <img 
                 src={activeImage} 
                 alt="Active Preview" 
-                className="w-full h-full object-cover transition-all"
+                className="w-full h-full object-contain transition-all"
                 referrerPolicy="no-referrer"
               />
             </div>
@@ -215,7 +200,7 @@ export default function PropertyDetailModal({
                       : 'hover:opacity-90 border border-gray-100'
                   }`}
                 >
-                  <img src={img} alt="Thumbnail" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  <img src={img} alt="Thumbnail" className="w-full h-full object-contain bg-gray-900" referrerPolicy="no-referrer" />
                   {idx === 3 && property.imagesList.length > 4 && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-xs font-bold uppercase tracking-wider">
                       +{property.imagesList.length - 4} Photos
@@ -322,61 +307,18 @@ export default function PropertyDetailModal({
               {revealed ? (
                 <div className="space-y-4 pt-2 animate-in fade-in duration-300">
                   <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 text-center space-y-3">
-                    <img 
-                      src={property.host.avatar} 
-                      alt={property.host.name} 
-                      className="w-16 h-16 rounded-full object-cover mx-auto ring-2 ring-primary ring-offset-2" 
-                      referrerPolicy="no-referrer"
-                    />
                     <div>
                       <p className="text-xs text-primary font-bold uppercase tracking-wider">Property Owner</p>
                       <h4 className="font-extrabold text-gray-800 text-base mt-0.5">{property.host.name}</h4>
                     </div>
-                    <div className="space-y-2 text-xs font-semibold text-gray-700 pt-1">
-                      <a 
-                        href={`tel:${property.host.phone}`} 
-                        className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-150 rounded-lg hover:text-primary transition-all shadow-2xs"
-                      >
-                        <Phone className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>{property.host.phone}</span>
-                      </a>
-                      <a 
-                        href={`mailto:${property.host.email}`}
-                        className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-150 rounded-lg hover:text-primary transition-all shadow-2xs"
-                      >
-                        <Mail className="w-4 h-4 text-tertiary shrink-0" />
-                        <span>{property.host.email}</span>
-                      </a>
-                    </div>
+                    <a
+                      href={`tel:${property.host.phone}`}
+                      className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-150 rounded-lg hover:text-primary transition-all shadow-2xs text-xs font-semibold text-gray-700"
+                    >
+                      <Phone className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>{property.host.phone}</span>
+                    </a>
                   </div>
-
-                  {/* Private chat helper */}
-                  <form onSubmit={handleSendMessage} className="space-y-2">
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide">
-                      Viber / WhatsApp Inquiry
-                    </label>
-                    <div className="relative">
-                      <input 
-                        type="text" 
-                        value={messageHostText}
-                        onChange={(e) => setMessageHostText(e.target.value)}
-                        placeholder="Say: Hello, is this kotha still available?" 
-                        className="w-full text-xs font-semibold py-2.5 pl-3 pr-10 border border-gray-200 hover:border-gray-300 rounded-xl focus:ring-1 focus:ring-primary focus:outline-none"
-                      />
-                      <button 
-                        type="submit"
-                        className="absolute right-1.5 top-1.5 p-1 bg-primary text-white hover:bg-primary-hover rounded-lg transition-colors cursor-pointer"
-                        title="Submit Inquiry"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    {messageHostSuccess && (
-                      <p className="text-[11px] text-emerald-600 font-bold leading-tight animate-pulse">
-                        ✓ Message dispatched! The landlord Ramesh was alerted via Viber.
-                      </p>
-                    )}
-                  </form>
                 </div>
               ) : (
                 <button

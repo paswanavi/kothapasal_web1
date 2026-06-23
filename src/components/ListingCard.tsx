@@ -22,11 +22,13 @@ export default function ListingCard({
 
   const getReadableType = (type: string) => {
     switch (type) {
-      case 'room': return 'Single Room';
-      case 'flat': return 'Apt / Flat';
+      case 'room': return 'Single Kotha';
+      case 'double': return 'Double Kotha';
+      case 'threebhk': return '3BHK';
+      case 'flat': return 'Flat / Apartment';
       case 'hostel': return 'Student Hostel';
-      case 'studio': return 'Studio Room';
-      case 'shared': return 'Shared Room';
+      case 'studio': return 'Studio';
+      case 'office': return 'Office Space';
       default: return type;
     }
   };
@@ -42,7 +44,7 @@ export default function ListingCard({
           <img 
             src={property.image} 
             alt={property.title} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 bg-gray-100"
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />

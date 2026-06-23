@@ -12,8 +12,10 @@ function splitLocation(loc: string) {
 function mapRoomType(rt: string): PropertyType {
   const t = (rt || '').toLowerCase()
   if (t.includes('studio')) return 'studio'
+  if (t.includes('office')) return 'office'
+  if (t.includes('3bhk') || t.includes('3 bhk') || t.includes('three') || t.includes('3bed')) return 'threebhk'
   if (t.includes('flat') || t.includes('apartment') || t.includes('bhk')) return 'flat'
-  if (t.includes('shared') || t.includes('double')) return 'shared'
+  if (t.includes('double') || t.includes('shared') || t.includes('twin')) return 'double'
   return 'room'
 }
 

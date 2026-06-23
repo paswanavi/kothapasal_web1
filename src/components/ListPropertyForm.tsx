@@ -15,7 +15,7 @@ import {
   Camera
 } from 'lucide-react';
 import { Property, HostelSeaterOption, PropertyType } from '../types';
-import { NEPAL_DISTRICTS, IMAGES } from '../mockData';
+import { NEPAL_CITIES, IMAGES } from '../mockData';
 import { uploadImage } from '../supabaseClient';
 
 interface ListPropertyFormProps {
@@ -37,7 +37,7 @@ export default function ListPropertyForm({ onAddProperty, userAvatar }: ListProp
   const [price, setPrice] = useState('10000');
   const [city, setCity] = useState('');
   const [area, setArea] = useState('');
-  const [district, setDistrict] = useState(NEPAL_DISTRICTS[0]);
+  const [district, setDistrict] = useState(NEPAL_CITIES[0]);
   const [customType, setCustomType] = useState<PropertyType>('room');
   const [contactPhone, setContactPhone] = useState('');
   
@@ -447,51 +447,39 @@ export default function ListPropertyForm({ onAddProperty, userAvatar }: ListProp
                 />
               </div>
 
-              {/* District & Location */}
+              {/* City & Location */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                    District *
+                    City *
                   </label>
                   <select
-                    value={district}
-                    onChange={(e) => setDistrict(e.target.value)}
+                    value={city || district}
+                    onChange={(e) => { setCity(e.target.value); setDistrict(e.target.value); }}
                     className="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none"
                   >
-                    {NEPAL_DISTRICTS.map((dst) => (
-                      <option key={dst} value={dst}>{dst}</option>
+                    <option value="">Select city…</option>
+                    {NEPAL_CITIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                    City / Town *
+                    Area / Neighborhood *
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="E.g. Kathmandu"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="E.g. New Baneshwor"
+                    value={area}
+                    onChange={(e) => setArea(e.target.value)}
                     className="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none"
                   />
                 </div>
               </div>
 
-              {/* Neighborhood Sector Area */}
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                  Neighborhood Location (Area) *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="E.g. New Baneshwor, Kirtipur"
-                  value={area}
-                  onChange={(e) => setArea(e.target.value)}
-                  className="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none"
-                />
-              </div>
+
 
               {/* Conditionally render: hostel vs standard pricing */}
               {isListingHostel ? (
@@ -589,10 +577,12 @@ export default function ListPropertyForm({ onAddProperty, userAvatar }: ListProp
                       onChange={(e) => setCustomType(e.target.value as PropertyType)}
                       className="w-full py-2.5 px-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none"
                     >
-                      <option value="room">Single Kotha (Room)</option>
+                      <option value="room">Single Room (Single Kotha)</option>
+                      <option value="double">Double Room (Double Kotha)</option>
+                      <option value="threebhk">3BHK</option>
                       <option value="flat">Flat / Apartment</option>
-                      <option value="studio">Studio Room</option>
-                      <option value="shared">Shared Roommate Plan</option>
+                      <option value="studio">Studio</option>
+                      <option value="office">Office Space</option>
                     </select>
                   </div>
                 </div>
