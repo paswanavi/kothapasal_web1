@@ -1139,7 +1139,7 @@ export default function App() {
                 <div className="bg-white rounded-3xl border-2 border-primary shadow-md p-6 md:p-8">
                   <div className="flex items-center justify-between">
                     <span className="bg-primary text-white text-xs font-bold px-3 py-1 rounded-full inline-flex items-center gap-1"><Star className="w-3.5 h-3.5" /> PLAN A</span>
-                    <span className="font-black text-2xl text-gray-900">Rs. 450</span>
+                    <span className="font-black text-2xl text-gray-900">Rs. 350</span>
                   </div>
                   <p className="text-gray-500 mt-4 font-semibold">30 Days OR 25 Landlord Connections · Priority Viewing · Instant Alerts · Premium Support</p>
                   <div className="grid grid-cols-2 gap-4 mt-6">
@@ -1151,7 +1151,7 @@ export default function App() {
                 <div className="bg-white rounded-3xl border-2 border-gray-900 shadow-md p-6 md:p-8">
                   <div className="flex items-center justify-between">
                     <span className="bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-full">PLAN B</span>
-                    <span className="font-black text-2xl text-gray-900">Rs. 250</span>
+                    <span className="font-black text-2xl text-gray-900">Rs. 200</span>
                   </div>
                   <p className="text-gray-500 mt-4 font-semibold">15 Days OR 10 Room Owner Connections · Direct Contact Access · Verified Listings Only</p>
                   <div className="grid grid-cols-2 gap-4 mt-6">
@@ -1189,7 +1189,7 @@ export default function App() {
                 <span className="self-start bg-primary text-white text-xs font-bold px-3 py-1 rounded-full inline-flex items-center gap-1"><Star className="w-3.5 h-3.5" /> BEST VALUE</span>
                 <div className="flex items-baseline justify-between mt-5">
                   <h3 className="font-black text-3xl text-gray-900">Plan A</h3>
-                  <div className="text-right"><span className="font-black text-3xl text-gray-900">450 rs</span><span className="block text-[10px] font-bold text-gray-400 uppercase">/ period</span></div>
+                  <div className="text-right"><span className="font-black text-3xl text-gray-900">350 rs</span><span className="block text-[10px] font-bold text-gray-400 uppercase">/ period</span></div>
                 </div>
                 <ul className="mt-6 space-y-3 text-gray-700 font-semibold text-sm flex-grow">
                   <li className="flex items-center gap-3"><Star className="w-5 h-5 text-primary shrink-0" /> 30 Days OR 25 Landlord Connections</li>
@@ -1199,7 +1199,7 @@ export default function App() {
                 </ul>
                 <button onClick={() => handlePurchasePlan('PLAN_A')}
                   className="mt-6 w-full bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-2xl inline-flex items-center justify-center gap-2">
-                  <Lock className="w-4 h-4" /> Pay Now — Rs. 450
+                  <Lock className="w-4 h-4" /> Pay Now — Rs. 350
                 </button>
               </div>
 
@@ -1208,7 +1208,7 @@ export default function App() {
                 <span className="self-start bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1 rounded-full">STARTER</span>
                 <div className="flex items-baseline justify-between mt-5">
                   <h3 className="font-black text-3xl text-gray-900">Plan B</h3>
-                  <div className="text-right"><span className="font-black text-3xl text-gray-900">250 rs</span><span className="block text-[10px] font-bold text-gray-400 uppercase">/ period</span></div>
+                  <div className="text-right"><span className="font-black text-3xl text-gray-900">200 rs</span><span className="block text-[10px] font-bold text-gray-400 uppercase">/ period</span></div>
                 </div>
                 <ul className="mt-6 space-y-3 text-gray-700 font-semibold text-sm flex-grow">
                   <li className="flex items-center gap-3"><Star className="w-5 h-5 text-primary shrink-0" /> 15 Days OR 10 Room Owner Connections</li>
@@ -1217,7 +1217,7 @@ export default function App() {
                 </ul>
                 <button onClick={() => handlePurchasePlan('PLAN_B')}
                   className="mt-6 w-full bg-gray-900 hover:bg-black text-white font-bold py-3.5 rounded-2xl inline-flex items-center justify-center gap-2">
-                  <Lock className="w-4 h-4" /> Pay Now — Rs. 250
+                  <Lock className="w-4 h-4" /> Pay Now — Rs. 200
                 </button>
               </div>
             </div>

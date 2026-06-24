@@ -33,7 +33,10 @@ export default function PaymentResult({ kind, onDone }: Props) {
         return;
       }
       setState('ok');
-      setMsg(`${String(data.plan).replace('_', ' ')} activated — ${data.credits} credits.`);
+      const till = data.expires_at
+        ? new Date(data.expires_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+        : null;
+      setMsg(`${String(data.plan).replace('_', ' ')} activated — ${data.credits} credits${till ? `, valid till ${till}` : ''}.`);
     })();
   }, [kind]);
 
