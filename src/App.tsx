@@ -19,7 +19,17 @@ import {
   Map,
   ListFilter,
   Star,
-  Home
+  Home,
+  CreditCard,
+  HelpCircle,
+  ShieldQuestion,
+  Mail,
+  Phone,
+  Check,
+  Bell,
+  Headphones,
+  Lock,
+  ArrowLeft
 } from 'lucide-react';
 
 import { Property, Review, PropertyType } from './types';
@@ -47,10 +57,12 @@ export default function App() {
   const PATH_TO_TAB: Record<string, string> = {
     '/': 'home', '/explore': 'explore', '/hostels': 'hostels',
     '/list': 'list_property', '/saved': 'saved', '/profile': 'profile', '/unlocked': 'unlocked',
+    '/my-listings': 'my_listings', '/subscription': 'subscription', '/help': 'help', '/terms': 'terms',
   };
   const TAB_TO_PATH: Record<string, string> = {
     home: '/', explore: '/explore', hostels: '/hostels',
     list_property: '/list', saved: '/saved', profile: '/profile', unlocked: '/unlocked',
+    my_listings: '/my-listings', subscription: '/subscription', help: '/help', terms: '/terms',
   };
   const hostelMatch = location.pathname.match(/^\/hostel\/(.+)$/);
   const hostelIdParam = hostelMatch ? decodeURIComponent(hostelMatch[1]) : null;
@@ -962,14 +974,24 @@ export default function App() {
 
             {/* Menu rows */}
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm divide-y divide-gray-100 overflow-hidden">
-              <button onClick={() => setCurrentTab('list_property')} className="w-full flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition text-left">
+              <button onClick={() => setCurrentTab('my_listings')} className="w-full flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition text-left">
                 <Building2 className="w-5 h-5 text-primary" />
                 <span className="font-bold text-gray-800 flex-1">My Listings</span>
                 <ChevronRight className="w-5 h-5 text-gray-400" />
               </button>
-              <button onClick={() => setCurrentTab('saved')} className="w-full flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition text-left">
-                <Heart className="w-5 h-5 text-primary" />
-                <span className="font-bold text-gray-800 flex-1">Saved List</span>
+              <button onClick={() => setCurrentTab('subscription')} className="w-full flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition text-left">
+                <CreditCard className="w-5 h-5 text-primary" />
+                <span className="font-bold text-gray-800 flex-1">My Subscription</span>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </button>
+              <button onClick={() => setCurrentTab('help')} className="w-full flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition text-left">
+                <HelpCircle className="w-5 h-5 text-primary" />
+                <span className="font-bold text-gray-800 flex-1">Help &amp; Support</span>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </button>
+              <button onClick={() => setCurrentTab('terms')} className="w-full flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition text-left">
+                <ShieldQuestion className="w-5 h-5 text-primary" />
+                <span className="font-bold text-gray-800 flex-1">Terms &amp; Privacy</span>
                 <ChevronRight className="w-5 h-5 text-gray-400" />
               </button>
               <button onClick={() => supabase.auth.signOut()} className="w-full flex items-center gap-4 px-6 py-4 hover:bg-red-50 transition text-left">
@@ -979,10 +1001,25 @@ export default function App() {
               </button>
             </div>
 
-            {/* My listings manager */}
-            {myListingIds.length > 0 && (
-              <div>
-                <h4 className="font-black text-lg text-gray-800 mb-4">My Custom Listings Manager</h4>
+          </div>
+        )}
+
+        {/* VIEW: MY LISTINGS — user's own published rooms + hostels */}
+        {currentTab === 'my_listings' && (
+          <div className="w-full px-4 md:px-8 py-8 space-y-8 animate-in fade-in duration-300">
+            <button onClick={() => setCurrentTab('profile')} className="inline-flex items-center gap-2 text-gray-600 hover:text-primary font-bold">
+              <ArrowLeft className="w-4 h-4" /> Back to Profile
+            </button>
+            <h2 className="font-sans font-black text-2xl text-gray-800">My Listings</h2>
+
+            {/* My rooms */}
+            <div>
+              <h4 className="font-black text-lg text-gray-800 mb-4">My Rooms</h4>
+              {properties.filter(p => myListingIds.includes(p.id)).length === 0 ? (
+                <div className="bg-white border border-gray-100 rounded-2xl p-10 text-center text-gray-400 font-semibold">
+                  No rooms published yet. Use <button onClick={() => setCurrentTab('list_property')} className="text-primary font-bold underline">List Property</button> to post one.
+                </div>
+              ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {properties.filter(p => myListingIds.includes(p.id)).map((myProp) => (
                     <ListingCard
@@ -994,9 +1031,183 @@ export default function App() {
                     />
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
+            {/* My hostels */}
+            <div>
+              <h4 className="font-black text-lg text-gray-800 mb-4">My Hostels</h4>
+              {hostels.filter(h => h.owner_id === session?.user?.id).length === 0 ? (
+                <div className="bg-white border border-gray-100 rounded-2xl p-10 text-center text-gray-400 font-semibold">
+                  No hostels published yet. Use <button onClick={() => setCurrentTab('list_property')} className="text-primary font-bold underline">List Property → Manage a Hostel</button>.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {hostels.filter(h => h.owner_id === session?.user?.id).map((h) => (
+                    <div key={h.id} onClick={() => navigate(`/hostel/${h.id}`)}
+                      className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-lg transition group flex flex-col">
+                      <div className="h-44 bg-gray-100">
+                        {h.cover_photo
+                          ? <img src={h.cover_photo} alt={h.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          : <div className="w-full h-full grid place-items-center text-4xl">🏢</div>}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-bold text-gray-800 group-hover:text-primary transition">{h.name}</h3>
+                        <p className="text-xs text-gray-400 font-bold flex items-center gap-1 mt-1"><MapPin className="w-3.5 h-3.5" /> {h.location}</p>
+                        <span className="inline-block mt-2 text-[9.5px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100 uppercase">{h.hostel_type}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: MY SUBSCRIPTION */}
+        {currentTab === 'subscription' && (
+          <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-8 space-y-8 animate-in fade-in duration-300">
+            <button onClick={() => setCurrentTab('profile')} className="inline-flex items-center gap-2 text-gray-600 hover:text-primary font-bold">
+              <ArrowLeft className="w-4 h-4" /> Back to Profile
+            </button>
+
+            {/* Active plan summary */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+              <h2 className="font-black text-2xl text-gray-900 mb-6">Active Plan</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-2xl py-6 text-center border border-gray-100">
+                  <Star className="w-7 h-7 text-primary mx-auto" />
+                  <div className="text-3xl font-black text-gray-900 mt-2">{credits}</div>
+                  <div className="text-sm text-gray-400 font-semibold mt-1">Credits Left</div>
+                </div>
+                <div className="bg-gray-50 rounded-2xl py-6 text-center border border-gray-100">
+                  <Lock className="w-7 h-7 text-primary mx-auto" />
+                  <div className="text-3xl font-black text-gray-900 mt-2">{unlockedIds.length}</div>
+                  <div className="text-sm text-gray-400 font-semibold mt-1">Unlocked</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Choose plan */}
+            <div>
+              <h2 className="font-black text-3xl text-gray-900">Choose your <span className="text-primary">Plan</span></h2>
+              <p className="text-gray-500 mt-2">Unlock premium living with direct connections and verified listings curated for the modern city dweller.</p>
+              <div className="mt-4 bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-start gap-3">
+                <Bell className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-600 font-medium">Looking around? Exploring cities and viewing basic details is always free.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Plan A */}
+              <div className="bg-white rounded-3xl border-2 border-primary shadow-md p-6 flex flex-col">
+                <span className="self-start bg-primary text-white text-xs font-bold px-3 py-1 rounded-full inline-flex items-center gap-1"><Star className="w-3.5 h-3.5" /> BEST VALUE</span>
+                <div className="flex items-baseline justify-between mt-5">
+                  <h3 className="font-black text-3xl text-gray-900">Plan A</h3>
+                  <div className="text-right"><span className="font-black text-3xl text-gray-900">450 rs</span><span className="block text-[10px] font-bold text-gray-400 uppercase">/ period</span></div>
+                </div>
+                <ul className="mt-6 space-y-3 text-gray-700 font-semibold text-sm flex-grow">
+                  <li className="flex items-center gap-3"><Star className="w-5 h-5 text-primary shrink-0" /> 30 Days OR 25 Landlord Connections</li>
+                  <li className="flex items-center gap-3"><ShieldCheck className="w-5 h-5 text-primary shrink-0" /> Priority Viewing Status</li>
+                  <li className="flex items-center gap-3"><Bell className="w-5 h-5 text-primary shrink-0" /> Instant New Listing Alerts</li>
+                  <li className="flex items-center gap-3"><Headphones className="w-5 h-5 text-primary shrink-0" /> Premium Support Concierge</li>
+                </ul>
+                <button onClick={() => alert('Payment integration coming soon (eSewa).')}
+                  className="mt-6 w-full bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-2xl inline-flex items-center justify-center gap-2">
+                  <Lock className="w-4 h-4" /> Pay Now — Rs. 450
+                </button>
+              </div>
+
+              {/* Plan B */}
+              <div className="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 flex flex-col">
+                <span className="self-start bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1 rounded-full">STARTER</span>
+                <div className="flex items-baseline justify-between mt-5">
+                  <h3 className="font-black text-3xl text-gray-900">Plan B</h3>
+                  <div className="text-right"><span className="font-black text-3xl text-gray-900">20 rs</span><span className="block text-[10px] font-bold text-gray-400 uppercase">/ period</span></div>
+                </div>
+                <ul className="mt-6 space-y-3 text-gray-700 font-semibold text-sm flex-grow">
+                  <li className="flex items-center gap-3"><Star className="w-5 h-5 text-primary shrink-0" /> 15 Days OR 10 Room Owner Connections</li>
+                  <li className="flex items-center gap-3"><Phone className="w-5 h-5 text-primary shrink-0" /> Direct Contact Access</li>
+                  <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary shrink-0" /> Verified Listings Only</li>
+                </ul>
+                <button onClick={() => alert('Payment integration coming soon (eSewa).')}
+                  className="mt-6 w-full bg-gray-900 hover:bg-black text-white font-bold py-3.5 rounded-2xl inline-flex items-center justify-center gap-2">
+                  <Lock className="w-4 h-4" /> Pay Now — Rs. 20
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: HELP & SUPPORT */}
+        {currentTab === 'help' && (
+          <div className="w-full max-w-3xl mx-auto px-4 md:px-8 py-8 space-y-8 animate-in fade-in duration-300">
+            <button onClick={() => setCurrentTab('profile')} className="inline-flex items-center gap-2 text-gray-600 hover:text-primary font-bold">
+              <ArrowLeft className="w-4 h-4" /> Back to Profile
+            </button>
+            <h2 className="font-black text-2xl text-gray-900">Help &amp; Support</h2>
+
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Contact</p>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+                <a href="mailto:support@kothapasal.com" className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50">
+                  <Mail className="w-5 h-5 text-primary" /> <span className="font-bold text-primary">support@kothapasal.com</span>
+                </a>
+                <a href="tel:+9779800000000" className="flex items-center gap-3 px-5 py-4 hover:bg-gray-50">
+                  <Phone className="w-5 h-5 text-primary" /> <span className="font-bold text-gray-800">+977 9800000000</span>
+                </a>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Common Help</p>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+                {[
+                  ['Listing a room', 'Use the List Property tab, add photos, select city/type/amenities, and publish.'],
+                  ['Unlocking contact', "Use one credit to unlock a landlord's call and message options."],
+                  ['Saved rooms', 'Tap the heart on a listing to keep it in your Saved tab.'],
+                ].map(([t, d]) => (
+                  <div key={t} className="px-5 py-4">
+                    <h4 className="font-black text-gray-900">{t}</h4>
+                    <p className="text-sm text-gray-500 mt-1">{d}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: TERMS & PRIVACY */}
+        {currentTab === 'terms' && (
+          <div className="w-full max-w-3xl mx-auto px-4 md:px-8 py-8 space-y-8 animate-in fade-in duration-300">
+            <button onClick={() => setCurrentTab('profile')} className="inline-flex items-center gap-2 text-gray-600 hover:text-primary font-bold">
+              <ArrowLeft className="w-4 h-4" /> Back to Profile
+            </button>
+            <h2 className="font-black text-2xl text-gray-900">Terms &amp; Privacy</h2>
+
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Terms</p>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+                {[
+                  ['Listings', 'Landlords are responsible for accurate property details, photos, pricing, and availability.'],
+                  ['Payments', 'Subscription credits unlock landlord contact access inside the app.'],
+                ].map(([t, d]) => (
+                  <div key={t} className="px-5 py-4"><h4 className="font-black text-gray-900">{t}</h4><p className="text-sm text-gray-500 mt-1">{d}</p></div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Privacy</p>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+                {[
+                  ['Profile data', 'Your profile information is used for account and app features.'],
+                  ['Photos', 'Listing and avatar images are stored to display your rooms and profile.'],
+                ].map(([t, d]) => (
+                  <div key={t} className="px-5 py-4"><h4 className="font-black text-gray-900">{t}</h4><p className="text-sm text-gray-500 mt-1">{d}</p></div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
