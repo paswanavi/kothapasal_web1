@@ -80,6 +80,7 @@ export default function App() {
   const [myListingIds, setMyListingIds] = useState<string[]>([]);
   const [unlockedIds, setUnlockedIds] = useState<string[]>([]);
   const [listMode, setListMode] = useState<'room' | 'hostel'>('room');
+  const [showPlans, setShowPlans] = useState<boolean>(false);
   const [profEditing, setProfEditing] = useState(false);
   const [profName, setProfName] = useState('');
   const [profBusy, setProfBusy] = useState(false);
@@ -167,7 +168,7 @@ export default function App() {
   const [homeBudget, setHomeBudget] = useState<string>('');
 
   // Hostels segment gender filter
-  const [hostelGenderFilter, setHostelGenderFilter] = useState<'boys' | 'girls'>('boys');
+  const [hostelGenderFilter, setHostelGenderFilter] = useState<'all' | 'boys' | 'girls'>('all');
 
   // Map view overlay simulation
   const [showMapOverlay, setShowMapOverlay] = useState<boolean>(false);
@@ -355,9 +356,9 @@ export default function App() {
 
   // Filtered lists specifically for student hostels tab
   const filteredHostels = useMemo(() => {
-    const want = hostelGenderFilter === 'boys' ? 'boys' : 'girls';
+    if (hostelGenderFilter === 'all') return hostels;
     return hostels.filter(h =>
-      (h.hostel_type || '').toLowerCase().includes(want)
+      (h.hostel_type || '').toLowerCase().includes(hostelGenderFilter)
     );
   }, [hostels, hostelGenderFilter]);
 
@@ -746,6 +747,17 @@ export default function App() {
               <div className="bg-gray-100 p-1 rounded-full flex shrink-0 shadow-inner">
                 <button
                   type="button"
+                  onClick={() => setHostelGenderFilter('all')}
+                  className={`px-6 py-2 rounded-full font-bold text-xs transition-all uppercase tracking-wider cursor-pointer ${
+                    hostelGenderFilter === 'all'
+                      ? 'bg-primary text-white shadow-xs'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  type="button"
                   onClick={() => setHostelGenderFilter('boys')}
                   className={`px-6 py-2 rounded-full font-bold text-xs transition-all uppercase tracking-wider cursor-pointer ${
                     hostelGenderFilter === 'boys'
@@ -772,7 +784,7 @@ export default function App() {
             {/* Hostels listings grid */}
             {filteredHostels.length === 0 ? (
               <div className="text-center py-16 bg-white border rounded-3xl text-gray-400 text-xs font-medium">
-                No custom {hostelGenderFilter} hostels posted yet. Click "List Property" to post!
+                No {hostelGenderFilter === 'all' ? '' : hostelGenderFilter + ' '}hostels posted yet. Click "List Property" to post!
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -831,23 +843,19 @@ export default function App() {
         {/* VIEW 4: LIST PROPERTY FORM */}
         {currentTab === 'list_property' && (
           <div className="w-full px-4 md:px-8 py-8 space-y-8 animate-in fade-in duration-300">
-            <div className="inline-flex bg-white border border-gray-200 rounded-full p-1 gap-1">
-              <button onClick={() => setListMode('room')}
-                className={`px-5 py-2 rounded-full text-sm font-bold ${listMode === 'room' ? 'bg-primary text-white' : 'text-gray-500'}`}>
-                List a Room
-              </button>
-              <button onClick={() => setListMode('hostel')}
-                className={`px-5 py-2 rounded-full text-sm font-bold ${listMode === 'hostel' ? 'bg-primary text-white' : 'text-gray-500'}`}>
-                Manage a Hostel
-              </button>
-            </div>
-            {listMode === 'room' ? (
+            {listMode === 'hostel' ? (
+              <>
+                <button onClick={() => setListMode('room')} className="inline-flex items-center gap-2 text-gray-600 hover:text-primary font-bold">
+                  <ArrowLeft className="w-4 h-4" /> Back to listing options
+                </button>
+                <HostelManager userId={session.user.id} />
+              </>
+            ) : (
               <ListPropertyForm
                 onAddProperty={handleAddProperty}
                 userAvatar={profile?.avatar_url || IMAGES.avatarDefault}
+                onManageHostel={() => setListMode('hostel')}
               />
-            ) : (
-              <HostelManager userId={session.user.id} />
             )}
           </div>
         )}
@@ -1065,30 +1073,67 @@ export default function App() {
         )}
 
         {/* VIEW: MY SUBSCRIPTION */}
-        {currentTab === 'subscription' && (
+        {currentTab === 'subscription' && (() => {
+          const planType = (profile?.plan_type || 'FREE').toUpperCase();
+          const expiry = profile?.subscription_expires_at
+            ? new Date(profile.subscription_expires_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+            : null;
+          return (
           <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-8 space-y-8 animate-in fade-in duration-300">
-            <button onClick={() => setCurrentTab('profile')} className="inline-flex items-center gap-2 text-gray-600 hover:text-primary font-bold">
-              <ArrowLeft className="w-4 h-4" /> Back to Profile
-            </button>
-
-            {/* Active plan summary */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
-              <h2 className="font-black text-2xl text-gray-900 mb-6">Active Plan</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 rounded-2xl py-6 text-center border border-gray-100">
-                  <Star className="w-7 h-7 text-primary mx-auto" />
-                  <div className="text-3xl font-black text-gray-900 mt-2">{credits}</div>
-                  <div className="text-sm text-gray-400 font-semibold mt-1">Credits Left</div>
-                </div>
-                <div className="bg-gray-50 rounded-2xl py-6 text-center border border-gray-100">
-                  <Lock className="w-7 h-7 text-primary mx-auto" />
-                  <div className="text-3xl font-black text-gray-900 mt-2">{unlockedIds.length}</div>
-                  <div className="text-sm text-gray-400 font-semibold mt-1">Unlocked</div>
-                </div>
-              </div>
+            {/* Header: back + upgrade/renew */}
+            <div className="flex items-center justify-between gap-4">
+              <button onClick={() => { setShowPlans(false); setCurrentTab('profile'); }} className="inline-flex items-center gap-2 text-gray-600 hover:text-primary font-bold">
+                <ArrowLeft className="w-4 h-4" /> Back to Profile
+              </button>
+              {!showPlans && (
+                <button onClick={() => setShowPlans(true)} className="bg-primary hover:bg-primary-hover text-white font-bold text-sm px-5 py-2.5 rounded-full inline-flex items-center gap-2">
+                  <CreditCard className="w-4 h-4" /> Upgrade or Renew
+                </button>
+              )}
             </div>
 
-            {/* Choose plan */}
+            {/* Active plan card */}
+            <div>
+              <h2 className="font-black text-2xl text-gray-900 mb-4">Active Plan</h2>
+              {planType === 'PLAN_A' ? (
+                <div className="bg-white rounded-3xl border-2 border-primary shadow-md p-6 md:p-8">
+                  <div className="flex items-center justify-between">
+                    <span className="bg-primary text-white text-xs font-bold px-3 py-1 rounded-full inline-flex items-center gap-1"><Star className="w-3.5 h-3.5" /> PLAN A</span>
+                    <span className="font-black text-2xl text-gray-900">Rs. 450</span>
+                  </div>
+                  <p className="text-gray-500 mt-4 font-semibold">30 Days OR 25 Landlord Connections · Priority Viewing · Instant Alerts · Premium Support</p>
+                  <div className="grid grid-cols-2 gap-4 mt-6">
+                    <div className="bg-gray-50 rounded-2xl py-5 text-center border border-gray-100"><div className="text-3xl font-black text-gray-900">{credits}</div><div className="text-xs text-gray-400 font-semibold mt-1">Credits Left</div></div>
+                    <div className="bg-gray-50 rounded-2xl py-5 text-center border border-gray-100"><div className="text-lg font-black text-gray-900">{expiry || '—'}</div><div className="text-xs text-gray-400 font-semibold mt-1">Valid Till</div></div>
+                  </div>
+                </div>
+              ) : planType === 'PLAN_B' ? (
+                <div className="bg-white rounded-3xl border-2 border-gray-900 shadow-md p-6 md:p-8">
+                  <div className="flex items-center justify-between">
+                    <span className="bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-full">PLAN B</span>
+                    <span className="font-black text-2xl text-gray-900">Rs. 20</span>
+                  </div>
+                  <p className="text-gray-500 mt-4 font-semibold">15 Days OR 10 Room Owner Connections · Direct Contact Access · Verified Listings Only</p>
+                  <div className="grid grid-cols-2 gap-4 mt-6">
+                    <div className="bg-gray-50 rounded-2xl py-5 text-center border border-gray-100"><div className="text-3xl font-black text-gray-900">{credits}</div><div className="text-xs text-gray-400 font-semibold mt-1">Credits Left</div></div>
+                    <div className="bg-gray-50 rounded-2xl py-5 text-center border border-gray-100"><div className="text-lg font-black text-gray-900">{expiry || '—'}</div><div className="text-xs text-gray-400 font-semibold mt-1">Valid Till</div></div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-3xl border-2 border-emerald-200 shadow-sm p-6 md:p-8">
+                  <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full inline-flex items-center gap-1"><Star className="w-3.5 h-3.5" /> FREE</span>
+                  <h3 className="font-black text-2xl text-gray-900 mt-4">New User — Free Credit</h3>
+                  <p className="text-gray-500 mt-1 font-semibold">You're on the free tier. {credits} credits to unlock landlord contacts.</p>
+                  <div className="bg-emerald-50 rounded-2xl py-6 text-center border border-emerald-100 mt-5 max-w-xs">
+                    <div className="text-4xl font-black text-emerald-700">{credits}</div>
+                    <div className="text-xs text-gray-500 font-semibold mt-1">Free Credits</div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Choose plan — only when upgrading/renewing */}
+            {showPlans && (<>
             <div>
               <h2 className="font-black text-3xl text-gray-900">Choose your <span className="text-primary">Plan</span></h2>
               <p className="text-gray-500 mt-2">Unlock premium living with direct connections and verified listings curated for the modern city dweller.</p>
@@ -1136,8 +1181,10 @@ export default function App() {
                 </button>
               </div>
             </div>
+            </>)}
           </div>
-        )}
+          );
+        })()}
 
         {/* VIEW: HELP & SUPPORT */}
         {currentTab === 'help' && (

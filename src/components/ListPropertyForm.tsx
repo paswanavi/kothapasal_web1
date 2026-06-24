@@ -15,15 +15,16 @@ import {
   Camera
 } from 'lucide-react';
 import { Property, HostelSeaterOption, PropertyType } from '../types';
-import { NEPAL_CITIES, IMAGES } from '../mockData';
+import { NEPAL_CITIES, AMENITIES, IMAGES } from '../mockData';
 import { uploadImage } from '../supabaseClient';
 
 interface ListPropertyFormProps {
   onAddProperty: (newProp: Property) => void;
   userAvatar: string;
+  onManageHostel?: () => void;
 }
 
-export default function ListPropertyForm({ onAddProperty, userAvatar }: ListPropertyFormProps) {
+export default function ListPropertyForm({ onAddProperty, userAvatar, onManageHostel }: ListPropertyFormProps) {
   // Wizard steps
   const [step, setStep] = useState(1); // 1: Chooser (Room vs Hostel), 2: Pricing tiers, 3: Form Details, 4: Success state
   
@@ -43,7 +44,7 @@ export default function ListPropertyForm({ onAddProperty, userAvatar }: ListProp
   
   // Amenities checkbox states
   const [amenities, setAmenities] = useState<string[]>([
-    "WiFi", "Water 24/7"
+    "WiFi", "Water"
   ]);
 
   // Specific Hostel States
@@ -86,19 +87,7 @@ export default function ListPropertyForm({ onAddProperty, userAvatar }: ListProp
     setPhotoPreviews(prev => prev.filter((_, idx) => idx !== i));
   };
 
-  const amenitiesOptions = [
-    "WiFi", 
-    "Water 24/7", 
-    "Kitchen", 
-    "Balcony", 
-    "Attached Bath", 
-    "Parking", 
-    "Power Backup",
-    "Solar Water",
-    "Mess Included",
-    "Laundry Service",
-    "CCTV Security"
-  ];
+  const amenitiesOptions = AMENITIES;
 
   const handleToggleAmenity = (name: string) => {
     if (amenities.includes(name)) {
@@ -194,7 +183,7 @@ export default function ListPropertyForm({ onAddProperty, userAvatar }: ListProp
       featured: selectedPlan === 'premium',
       image: uploadedUrls[0],
       imagesList: uploadedUrls,
-      amenities: amenities.length > 0 ? amenities : ["WiFi", "Water 24/7"],
+      amenities: amenities.length > 0 ? amenities : ["WiFi", "Water"],
       host: {
         name: "Owner",
         phone: contactPhone,
@@ -218,7 +207,7 @@ export default function ListPropertyForm({ onAddProperty, userAvatar }: ListProp
     setPrice('10000');
     setCity('');
     setArea('');
-    setAmenities(["WiFi", "Water 24/7"]);
+    setAmenities(["WiFi", "Water"]);
     setStep(1);
   };
 
@@ -283,7 +272,7 @@ export default function ListPropertyForm({ onAddProperty, userAvatar }: ListProp
 
             {/* Option 2: Hostel */}
             <button
-              onClick={() => handleSelectPropertyType(true)}
+              onClick={() => onManageHostel ? onManageHostel() : handleSelectPropertyType(true)}
               className="p-8 rounded-3xl border-2 border-dashed border-gray-200 hover:border-primary hover:bg-red-50/10 text-center transition-all cursor-pointer group flex flex-col items-center justify-center space-y-4"
             >
               <div className="w-16 h-16 rounded-full bg-green-50 text-emerald-700 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all">

@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase, uploadImage } from '../supabaseClient';
 import { Building2, PlusCircle, BedDouble, Phone, Camera } from 'lucide-react';
+import { NEPAL_CITIES as CITIES, AMENITIES } from '../mockData';
 
-const CITIES = ['Kathmandu','Lalitpur','Bhaktapur','Kaski','Chitwan','Morang','Rupandehi','Sunsari','Jhapa','Makwanpur'];
 const SHARING = ['1 Seater','2 Seater','3 Seater'];
-const AMENITIES = ['Wi-Fi','Attached Bathroom','Kitchen','Parking','Water Supply','Furnished','Balcony','Security','Laundry'];
 
 export default function HostelManager({ userId }: { userId: string }) {
   const [hostels, setHostels] = useState<any[]>([]);
