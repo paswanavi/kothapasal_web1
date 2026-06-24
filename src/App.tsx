@@ -44,6 +44,7 @@ import ListPropertyForm from './components/ListPropertyForm';
 import Login from './components/Login';
 import HostelManager from './components/HostelManager';
 import HostelPage from './components/HostelPage';
+import PaymentResult from './components/PaymentResult';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function App() {
@@ -204,13 +205,27 @@ export default function App() {
     return false; // no_credits | expired | not_authenticated
   };
 
-  // Simulated purchase (eSewa wires here next). Grants credits + validity window via RPC.
+  // Start eSewa checkout: server signs the form, we POST the user to eSewa.
   const handlePurchasePlan = async (plan: 'PLAN_A' | 'PLAN_B') => {
-    const { data, error } = await supabase.rpc('purchase_plan', { p_plan: plan });
-    if (error || !data?.ok) { alert('Purchase failed: ' + (error?.message || data?.reason || 'unknown')); return; }
-    await loadProfile(session?.user?.id);
-    setShowPlans(false);
-    alert(`✓ ${plan.replace('_', ' ')} activated — ${data.credits} credits.`);
+    const { data, error } = await supabase.functions.invoke('esewa-initiate', {
+      body: { plan, origin: window.location.origin },
+    });
+    if (error || !data?.fields || !data?.endpoint) {
+      alert('Could not start payment: ' + (error?.message || data?.error || 'unknown'));
+      return;
+    }
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = data.endpoint;
+    Object.entries(data.fields).forEach(([k, v]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = k;
+      input.value = String(v);
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
   };
 
   // When credits run out, send user to the plan chooser
@@ -388,6 +403,12 @@ export default function App() {
 
   if (!authReady) return null;
   if (!session) return <Login />;
+  if (location.pathname === '/payment/success' || location.pathname === '/payment/failure') return (
+    <PaymentResult
+      kind={location.pathname.endsWith('success') ? 'success' : 'failure'}
+      onDone={() => { loadProfile(session?.user?.id); setShowPlans(false); navigate('/subscription'); }}
+    />
+  );
   if (hostelIdParam) return (
     <div className="min-h-screen bg-surface-bg">
       <HostelPage hostelId={hostelIdParam} onBack={() => navigate('/hostels')} />
