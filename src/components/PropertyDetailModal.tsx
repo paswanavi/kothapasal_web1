@@ -29,7 +29,9 @@ interface PropertyDetailModalProps {
   isFavorited: boolean;
   onToggleFavorite: (id: string, e: React.MouseEvent) => void;
   userCredits: number;
-  onDeductCredit: (propertyId: string) => boolean; // returns true if succeeded
+  onDeductCredit: (propertyId: string) => Promise<boolean>; // resolves true if reveal succeeded
+  onNeedPlan: () => void; // out of credits → go buy a plan
+  isUnlocked?: boolean; // already unlocked previously
   onAddReview: (propertyId: string, review: Review) => void;
 }
 
@@ -40,9 +42,12 @@ export default function PropertyDetailModal({
   onToggleFavorite,
   userCredits,
   onDeductCredit,
+  onNeedPlan,
+  isUnlocked,
   onAddReview
 }: PropertyDetailModalProps) {
-  const [revealed, setRevealed] = useState(false);
+  const [revealed, setRevealed] = useState(!!isUnlocked);
+  const [revealing, setRevealing] = useState(false);
   const photos: string[] = (property.imagesList && property.imagesList.length)
     ? property.imagesList
     : (property.image ? [property.image] : []);
@@ -100,13 +105,15 @@ export default function PropertyDetailModal({
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [reviewSubmitSuccess, setReviewSubmitSuccess] = useState(false);
 
-  const handleRevealContact = () => {
-    if (revealed) return;
-    const success = onDeductCredit(property.id);
+  const handleRevealContact = async () => {
+    if (revealed || revealing) return;
+    setRevealing(true);
+    const success = await onDeductCredit(property.id);
+    setRevealing(false);
     if (success) {
       setRevealed(true);
     } else {
-      alert("Insufficient credits! Please click 'Replenish' on the top bar or profile tab to add credits.");
+      onNeedPlan();
     }
   };
 
@@ -363,10 +370,11 @@ export default function PropertyDetailModal({
                 <button
                   type="button"
                   onClick={handleRevealContact}
-                  className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-bold text-sm rounded-full transition-all shadow-md hover:shadow-lg active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
+                  disabled={revealing}
+                  className="w-full py-4 bg-primary hover:bg-primary-hover text-white font-bold text-sm rounded-full transition-all shadow-md hover:shadow-lg active:scale-98 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   <Phone className="w-4 h-4" />
-                  Reveal Host Information
+                  {revealing ? 'Revealing…' : 'Reveal Host Information'}
                 </button>
               )}
 

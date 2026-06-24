@@ -192,13 +192,32 @@ export default function App() {
     alert("✓ Simulated Transaction successful! Placed +10 credits inside your wallet.");
   };
 
-  const handleDeductCredit = (propertyId: string): boolean => {
-    // Check if property is already revealed or if user has credits
-    if (credits < 1) {
-      return false;
+  // Server-authoritative reveal: deducts a credit, records the unlock, enforces plan validity.
+  const handleDeductCredit = async (propertyId: string): Promise<boolean> => {
+    const { data, error } = await supabase.rpc('reveal_contact', { p_listing_id: propertyId });
+    if (error) { console.error('reveal_contact failed:', error); return false; }
+    if (data?.ok) {
+      if (typeof data.credits === 'number') setCredits(data.credits);
+      setUnlockedIds(prev => prev.includes(propertyId) ? prev : [...prev, propertyId]);
+      return true;
     }
-    setCredits(prev => prev - 1);
-    return true;
+    return false; // no_credits | expired | not_authenticated
+  };
+
+  // Simulated purchase (eSewa wires here next). Grants credits + validity window via RPC.
+  const handlePurchasePlan = async (plan: 'PLAN_A' | 'PLAN_B') => {
+    const { data, error } = await supabase.rpc('purchase_plan', { p_plan: plan });
+    if (error || !data?.ok) { alert('Purchase failed: ' + (error?.message || data?.reason || 'unknown')); return; }
+    await loadProfile(session?.user?.id);
+    setShowPlans(false);
+    alert(`✓ ${plan.replace('_', ' ')} activated — ${data.credits} credits.`);
+  };
+
+  // When credits run out, send user to the plan chooser
+  const handleNeedPlan = () => {
+    setSelectedProperty(null);
+    setShowPlans(true);
+    navigate('/subscription');
   };
 
   const handleAddReview = (propertyId: string, review: Review) => {
@@ -1157,7 +1176,7 @@ export default function App() {
                   <li className="flex items-center gap-3"><Bell className="w-5 h-5 text-primary shrink-0" /> Instant New Listing Alerts</li>
                   <li className="flex items-center gap-3"><Headphones className="w-5 h-5 text-primary shrink-0" /> Premium Support Concierge</li>
                 </ul>
-                <button onClick={() => alert('Payment integration coming soon (eSewa).')}
+                <button onClick={() => handlePurchasePlan('PLAN_A')}
                   className="mt-6 w-full bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-2xl inline-flex items-center justify-center gap-2">
                   <Lock className="w-4 h-4" /> Pay Now — Rs. 450
                 </button>
@@ -1175,7 +1194,7 @@ export default function App() {
                   <li className="flex items-center gap-3"><Phone className="w-5 h-5 text-primary shrink-0" /> Direct Contact Access</li>
                   <li className="flex items-center gap-3"><Check className="w-5 h-5 text-primary shrink-0" /> Verified Listings Only</li>
                 </ul>
-                <button onClick={() => alert('Payment integration coming soon (eSewa).')}
+                <button onClick={() => handlePurchasePlan('PLAN_B')}
                   className="mt-6 w-full bg-gray-900 hover:bg-black text-white font-bold py-3.5 rounded-2xl inline-flex items-center justify-center gap-2">
                   <Lock className="w-4 h-4" /> Pay Now — Rs. 20
                 </button>
@@ -1269,6 +1288,8 @@ export default function App() {
           onToggleFavorite={handleToggleFavorite}
           userCredits={credits}
           onDeductCredit={handleDeductCredit}
+          onNeedPlan={handleNeedPlan}
+          isUnlocked={unlockedIds.includes(selectedProperty.id)}
           onAddReview={handleAddReview}
         />
       )}
