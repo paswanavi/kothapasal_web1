@@ -397,13 +397,13 @@ export default function App() {
             <section className="relative min-h-[580px] flex flex-col justify-center items-center px-4 md:px-8 pt-12 pb-20">
               <div className="absolute inset-0 z-0 overflow-hidden">
                 <img
-                  alt="Kotha Pasal Nepal — temples, Himalayas and city skyline"
-                  className="w-full h-full object-contain"
-                  src="/hero-nepal.png"
+                  alt="Kotha Pasal — rooms, flats, hostels and offices across Nepal"
+                  className="w-full h-full object-cover"
+                  src="/hero-collage.png"
                   referrerPolicy="no-referrer"
                 />
-                {/* Soft fade into page below so the illustration blends */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-surface-bg" />
+                {/* Readability overlay over the collage */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-surface-bg" />
               </div>
 
               <div className="relative z-10 w-full max-w-4xl mx-auto text-center mt-6 rounded-3xl bg-white/35 backdrop-blur-xl border border-white/40 shadow-[0_8px_40px_rgba(0,0,0,0.12)] px-6 py-10 md:px-12 md:py-12">
