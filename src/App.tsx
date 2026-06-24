@@ -1132,44 +1132,60 @@ export default function App() {
               )}
             </div>
 
-            {/* Active plan card */}
+            {/* Credits + Unlocked stat buttons */}
+            <div className="grid grid-cols-2 gap-4 md:gap-6">
+              <div className="bg-white rounded-3xl border border-gray-100 shadow-sm py-8 text-center">
+                <Star className="w-7 h-7 text-primary mx-auto" />
+                <div className="text-3xl font-black text-gray-900 mt-2">{credits}</div>
+                <div className="text-sm text-gray-400 font-semibold mt-1">Credits Left</div>
+              </div>
+              <button onClick={() => setCurrentTab('unlocked')} className="bg-white rounded-3xl border border-gray-100 shadow-sm py-8 text-center cursor-pointer hover:shadow-md transition">
+                <Lock className="w-7 h-7 text-primary mx-auto" />
+                <div className="text-3xl font-black text-gray-900 mt-2">{unlockedIds.length}</div>
+                <div className="text-sm text-gray-400 font-semibold mt-1">Unlocked Rooms</div>
+              </button>
+            </div>
+
+            {/* Your plans: Free card always + subscribed card when on a paid plan */}
             <div>
-              <h2 className="font-black text-2xl text-gray-900 mb-4">Active Plan</h2>
-              {planType === 'PLAN_A' ? (
-                <div className="bg-white rounded-3xl border-2 border-primary shadow-md p-6 md:p-8">
+              <h2 className="font-black text-2xl text-gray-900 mb-4">Your Plan</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Free plan card */}
+                <div className={`bg-white rounded-3xl p-6 md:p-8 shadow-sm ${planType === 'FREE' ? 'border-2 border-emerald-300' : 'border border-gray-150'}`}>
                   <div className="flex items-center justify-between">
-                    <span className="bg-primary text-white text-xs font-bold px-3 py-1 rounded-full inline-flex items-center gap-1"><Star className="w-3.5 h-3.5" /> PLAN A</span>
-                    <span className="font-black text-2xl text-gray-900">Rs. 350</span>
+                    <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full inline-flex items-center gap-1"><Star className="w-3.5 h-3.5" /> FREE</span>
+                    {planType === 'FREE' && <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Active</span>}
                   </div>
-                  <p className="text-gray-500 mt-4 font-semibold">30 Days OR 25 Landlord Connections · Priority Viewing · Instant Alerts · Premium Support</p>
-                  <div className="grid grid-cols-2 gap-4 mt-6">
-                    <div className="bg-gray-50 rounded-2xl py-5 text-center border border-gray-100"><div className="text-3xl font-black text-gray-900">{credits}</div><div className="text-xs text-gray-400 font-semibold mt-1">Credits Left</div></div>
-                    <div className="bg-gray-50 rounded-2xl py-5 text-center border border-gray-100"><div className="text-lg font-black text-gray-900">{expiry || '—'}</div><div className="text-xs text-gray-400 font-semibold mt-1">Valid Till</div></div>
-                  </div>
+                  <h3 className="font-black text-xl text-gray-900 mt-4">New User Free Credit</h3>
+                  <p className="text-gray-500 mt-1 font-semibold text-sm">3 free credits to unlock room owner contacts. No expiry.</p>
                 </div>
-              ) : planType === 'PLAN_B' ? (
-                <div className="bg-white rounded-3xl border-2 border-gray-900 shadow-md p-6 md:p-8">
-                  <div className="flex items-center justify-between">
-                    <span className="bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-full">PLAN B</span>
-                    <span className="font-black text-2xl text-gray-900">Rs. 200</span>
+
+                {/* Subscribed plan card */}
+                {planType === 'PLAN_A' && (
+                  <div className="bg-white rounded-3xl border-2 border-primary shadow-md p-6 md:p-8">
+                    <div className="flex items-center justify-between">
+                      <span className="bg-primary text-white text-xs font-bold px-3 py-1 rounded-full inline-flex items-center gap-1"><Star className="w-3.5 h-3.5" /> PLAN A</span>
+                      <span className="font-black text-2xl text-gray-900">Rs. 350</span>
+                    </div>
+                    <p className="text-gray-500 mt-4 font-semibold text-sm">30 Days OR 25 Landlord Connections · Priority Viewing · Instant Alerts · Premium Support</p>
+                    <div className="bg-gray-50 rounded-2xl py-4 text-center border border-gray-100 mt-5">
+                      <div className="text-lg font-black text-gray-900">{credits} credits · valid till {expiry || '—'}</div>
+                    </div>
                   </div>
-                  <p className="text-gray-500 mt-4 font-semibold">15 Days OR 10 Room Owner Connections · Direct Contact Access · Verified Listings Only</p>
-                  <div className="grid grid-cols-2 gap-4 mt-6">
-                    <div className="bg-gray-50 rounded-2xl py-5 text-center border border-gray-100"><div className="text-3xl font-black text-gray-900">{credits}</div><div className="text-xs text-gray-400 font-semibold mt-1">Credits Left</div></div>
-                    <div className="bg-gray-50 rounded-2xl py-5 text-center border border-gray-100"><div className="text-lg font-black text-gray-900">{expiry || '—'}</div><div className="text-xs text-gray-400 font-semibold mt-1">Valid Till</div></div>
+                )}
+                {planType === 'PLAN_B' && (
+                  <div className="bg-white rounded-3xl border-2 border-gray-900 shadow-md p-6 md:p-8">
+                    <div className="flex items-center justify-between">
+                      <span className="bg-gray-900 text-white text-xs font-bold px-3 py-1 rounded-full">PLAN B</span>
+                      <span className="font-black text-2xl text-gray-900">Rs. 200</span>
+                    </div>
+                    <p className="text-gray-500 mt-4 font-semibold text-sm">15 Days OR 10 Room Owner Connections · Direct Contact Access · Verified Listings Only</p>
+                    <div className="bg-gray-50 rounded-2xl py-4 text-center border border-gray-100 mt-5">
+                      <div className="text-lg font-black text-gray-900">{credits} credits · valid till {expiry || '—'}</div>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="bg-white rounded-3xl border-2 border-emerald-200 shadow-sm p-6 md:p-8">
-                  <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full inline-flex items-center gap-1"><Star className="w-3.5 h-3.5" /> FREE</span>
-                  <h3 className="font-black text-2xl text-gray-900 mt-4">New User — Free Credit</h3>
-                  <p className="text-gray-500 mt-1 font-semibold">You're on the free tier. {credits} credits to unlock landlord contacts.</p>
-                  <div className="bg-emerald-50 rounded-2xl py-6 text-center border border-emerald-100 mt-5 max-w-xs">
-                    <div className="text-4xl font-black text-emerald-700">{credits}</div>
-                    <div className="text-xs text-gray-500 font-semibold mt-1">Free Credits</div>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Choose plan — only when upgrading/renewing */}
