@@ -48,6 +48,7 @@ export default function PropertyDetailModal({
 }: PropertyDetailModalProps) {
   const [revealed, setRevealed] = useState(!!isUnlocked);
   const [revealing, setRevealing] = useState(false);
+  const [outOfCredit, setOutOfCredit] = useState(false);
   const photos: string[] = (property.imagesList && property.imagesList.length)
     ? property.imagesList
     : (property.image ? [property.image] : []);
@@ -113,7 +114,7 @@ export default function PropertyDetailModal({
     if (success) {
       setRevealed(true);
     } else {
-      onNeedPlan();
+      setOutOfCredit(true);
     }
   };
 
@@ -394,6 +395,35 @@ export default function PropertyDetailModal({
 
 
       </div>
+
+      {/* Out of Credit modal */}
+      {outOfCredit && (
+        <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4" onClick={() => setOutOfCredit(false)}>
+          <div className="bg-white rounded-3xl max-w-sm w-full p-7 shadow-2xl text-center animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+            <div className="w-16 h-16 rounded-full bg-amber-50 grid place-items-center mx-auto">
+              <Coins className="w-8 h-8 text-amber-500" />
+            </div>
+            <h3 className="font-black text-xl text-gray-900 mt-5">You're out of credits</h3>
+            <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+              Buy a plan to keep unlocking room owner contacts. Credits are valid through your subscription period.
+            </p>
+            <button
+              type="button"
+              onClick={() => { setOutOfCredit(false); onNeedPlan(); }}
+              className="mt-6 w-full py-3.5 bg-primary hover:bg-primary-hover text-white font-bold rounded-full transition-colors"
+            >
+              View Plans
+            </button>
+            <button
+              type="button"
+              onClick={() => setOutOfCredit(false)}
+              className="mt-2 w-full py-2.5 text-gray-500 hover:text-gray-700 font-bold text-sm rounded-full"
+            >
+              Maybe later
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
