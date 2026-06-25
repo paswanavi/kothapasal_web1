@@ -45,6 +45,7 @@ import Login from './components/Login';
 import HostelManager from './components/HostelManager';
 import HostelPage from './components/HostelPage';
 import PaymentResult from './components/PaymentResult';
+import ConfirmationModals from './components/ConfirmationModals';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function App() {
@@ -1317,6 +1318,9 @@ export default function App() {
       </main>
 
       {/* Property Details Dialog overlay */}
+      {/* Double-handshake + heartbeat confirmation popups, intercepts on login */}
+      <ConfirmationModals userId={session?.user?.id} />
+
       {selectedProperty && (
         <PropertyDetailModal 
           property={selectedProperty}

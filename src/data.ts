@@ -35,7 +35,8 @@ async function ratingMap(type: string, ids: string[]) {
 
 export async function fetchProperties(): Promise<Property[]> {
   // ---- Rooms (listings) ----
-  const { data: listings } = await supabase.from('listings').select('*').order('created_at', { ascending: false })
+  // Hide archived (taken) rooms from the public feed — never deleted server-side.
+  const { data: listings } = await supabase.from('listings').select('*').neq('status', 'archived').order('created_at', { ascending: false })
   const rooms = listings || []
   const roomRatings = await ratingMap('listing', rooms.map((r: any) => r.id))
 
