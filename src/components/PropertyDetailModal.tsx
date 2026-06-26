@@ -201,16 +201,16 @@ export default function PropertyDetailModal({
 
         {/* Photo carousel — arrows + keyboard nav */}
         <div className="p-4 md:p-8">
-          <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-gray-900 h-[300px] md:h-[440px] group">
+          <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 flex items-center justify-center max-h-[75vh] group">
             {photos.length > 0 ? (
               <img
                 src={photos[imgIdx]}
                 alt={`Photo ${imgIdx + 1}`}
-                className="w-full h-full object-contain transition-all"
+                className="w-full max-h-[75vh] object-contain transition-all"
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <div className="w-full h-full grid place-items-center text-5xl text-white/40">🏠</div>
+              <div className="w-full h-72 grid place-items-center text-5xl text-gray-300">🏠</div>
             )}
 
             {photos.length > 1 && (

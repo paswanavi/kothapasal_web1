@@ -44,7 +44,7 @@ export default function ListingCard({
           <img 
             src={property.image} 
             alt={property.title} 
-            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 bg-gray-100"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 bg-gray-100"
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />

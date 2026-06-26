@@ -52,6 +52,9 @@ export default function App() {
   // Main states
   const [properties, setProperties] = useState<Property[]>([]);
   const [hostels, setHostels] = useState<any[]>([]);
+  const [hostelSeaters, setHostelSeaters] = useState<Record<string, string[]>>({}); // hostel_id → accommodations
+  const [hostelCityFilter, setHostelCityFilter] = useState<string>('all');
+  const [hostelSeaterFilter, setHostelSeaterFilter] = useState<string>('any');
   const [loadingData, setLoadingData] = useState<boolean>(true);
   // URL-driven tabs (real sub-directories, refresh-safe)
   const navigate = useNavigate();
@@ -83,6 +86,19 @@ export default function App() {
   const [unlockedIds, setUnlockedIds] = useState<string[]>([]);
   const [listMode, setListMode] = useState<'room' | 'hostel'>('room');
   const [showPlans, setShowPlans] = useState<boolean>(false);
+
+  // Un-gated browsing: anon can view cards; opening full detail prompts sign-in, then returns.
+  const [showLogin, setShowLogin] = useState(false);
+  const [postLoginPath, setPostLoginPath] = useState<string | null>(null);
+  const [pendingProperty, setPendingProperty] = useState<Property | null>(null);
+  const openProperty = (p: Property) => {
+    if (session) setSelectedProperty(p);
+    else { setPendingProperty(p); setShowLogin(true); }
+  };
+  const openHostel = (id: string) => {
+    if (session) navigate(`/hostel/${id}`);
+    else { setPostLoginPath(`/hostel/${id}`); setShowLogin(true); }
+  };
   const [profEditing, setProfEditing] = useState(false);
   const [profName, setProfName] = useState('');
   const [profBusy, setProfBusy] = useState(false);
@@ -129,6 +145,15 @@ export default function App() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // After a prompted sign-in, return the user to what they were trying to open.
+  useEffect(() => {
+    if (session && showLogin) {
+      setShowLogin(false);
+      if (pendingProperty) { setSelectedProperty(pendingProperty); setPendingProperty(null); }
+      if (postLoginPath) { navigate(postLoginPath); setPostLoginPath(null); }
+    }
+  }, [session, showLogin]);
+
   // Load real data from Supabase (replaces hardcoded INITIAL_PROPERTIES)
   useEffect(() => {
     let active = true;
@@ -139,6 +164,17 @@ export default function App() {
     // Load custom hostels (separate table from listings)
     supabase.from('hostels').select('*').order('created_at', { ascending: false })
       .then(({ data }) => { if (active) setHostels(data || []); });
+    // Seater map for the hostels-page sharing filter.
+    supabase.from('hostel_rooms').select('hostel_id, accommodation')
+      .then(({ data }) => {
+        if (!active) return;
+        const map: Record<string, string[]> = {};
+        (data || []).forEach((r: any) => {
+          if (!map[r.hostel_id]) map[r.hostel_id] = [];
+          if (r.accommodation) map[r.hostel_id].push(String(r.accommodation));
+        });
+        setHostelSeaters(map);
+      });
     // Optional: if logged in, load credits + favorites from Supabase
     (async () => {
       const { data } = await supabase.auth.getSession();
@@ -391,11 +427,17 @@ export default function App() {
 
   // Filtered lists specifically for student hostels tab
   const filteredHostels = useMemo(() => {
-    if (hostelGenderFilter === 'all') return hostels;
-    return hostels.filter(h =>
-      (h.hostel_type || '').toLowerCase().includes(hostelGenderFilter)
-    );
-  }, [hostels, hostelGenderFilter]);
+    const seaterNum = hostelSeaterFilter === 'any' ? null : hostelSeaterFilter; // '1' | '2' | '3'
+    return hostels.filter(h => {
+      if (hostelGenderFilter !== 'all' && !(h.hostel_type || '').toLowerCase().includes(hostelGenderFilter)) return false;
+      if (hostelCityFilter !== 'all' && !(h.location || '').toLowerCase().includes(hostelCityFilter.toLowerCase())) return false;
+      if (seaterNum) {
+        const accos = hostelSeaters[h.id] || [];
+        if (!accos.some(a => a.replace(/\D/g, '') === seaterNum)) return false;
+      }
+      return true;
+    });
+  }, [hostels, hostelGenderFilter, hostelCityFilter, hostelSeaterFilter, hostelSeaters]);
 
   // Featured lists for Home view slider
   const featuredKathmandu = useMemo(() => {
@@ -403,18 +445,21 @@ export default function App() {
   }, [properties]);
 
   if (!authReady) return null;
-  if (!session) return <Login />;
   if (location.pathname === '/payment/success' || location.pathname === '/payment/failure') return (
     <PaymentResult
       kind={location.pathname.endsWith('success') ? 'success' : 'failure'}
       onDone={() => { loadProfile(session?.user?.id); setShowPlans(false); navigate('/subscription'); }}
     />
   );
-  if (hostelIdParam) return (
-    <div className="min-h-screen bg-surface-bg">
-      <HostelPage hostelId={hostelIdParam} onBack={() => navigate('/hostels')} />
-    </div>
-  );
+  if (hostelIdParam) {
+    // Viewing a hostel's full detail requires sign-in; deep-link lands on login then returns here.
+    if (!session) return <Login onClose={() => navigate('/hostels')} />;
+    return (
+      <div className="min-h-screen bg-surface-bg">
+        <HostelPage hostelId={hostelIdParam} onBack={() => navigate('/hostels')} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pb-24 md:pb-8 text-gray-800 bg-surface-bg flex flex-col font-sans transition-colors pt-20">
@@ -588,7 +633,7 @@ export default function App() {
                 <div>
                   <h2 className="font-sans font-black text-xl text-gray-800 flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-primary" />
-                    Featured Listings in Kathmandu & Patan
+                    Featured Rooms
                   </h2>
                   <p className="text-gray-450 text-xs font-semibold mt-1">Handpicked verified kothas with excellent facilities</p>
                 </div>
@@ -608,7 +653,7 @@ export default function App() {
                       property={prop}
                       isFavorited={favorites.includes(prop.id)}
                       onToggleFavorite={handleToggleFavorite}
-                      onSelectProperty={setSelectedProperty}
+                      onSelectProperty={openProperty}
                     />
                   </div>
                 ))}
@@ -717,7 +762,7 @@ export default function App() {
                       {filteredProperties.slice(0, 5).map((prop, index) => (
                         <div 
                           key={prop.id}
-                          onClick={() => setSelectedProperty(prop)}
+                          onClick={() => openProperty(prop)}
                           className="absolute bg-primary text-white font-extrabold text-xs px-2.5 py-1.5 rounded-full shadow-lg border hover:scale-110 cursor-pointer animate-bounce group"
                           style={{
                             top: `${40 + index * 10}%`,
@@ -759,7 +804,7 @@ export default function App() {
                             property={prop}
                             isFavorited={favorites.includes(prop.id)}
                             onToggleFavorite={handleToggleFavorite}
-                            onSelectProperty={setSelectedProperty}
+                            onSelectProperty={openProperty}
                           />
                         ))}
                       </div>
@@ -822,6 +867,22 @@ export default function App() {
               </div>
             </div>
 
+            {/* City + sharing filters */}
+            <div className="flex flex-wrap gap-3">
+              <select value={hostelCityFilter} onChange={(e) => setHostelCityFilter(e.target.value)}
+                className="border border-gray-200 rounded-full px-4 py-2.5 text-sm font-bold text-gray-700 bg-white focus:outline-none focus:border-primary">
+                <option value="all">All Cities</option>
+                {NEPAL_CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select value={hostelSeaterFilter} onChange={(e) => setHostelSeaterFilter(e.target.value)}
+                className="border border-gray-200 rounded-full px-4 py-2.5 text-sm font-bold text-gray-700 bg-white focus:outline-none focus:border-primary">
+                <option value="any">Any Sharing</option>
+                <option value="1">1 Seater</option>
+                <option value="2">2 Seater</option>
+                <option value="3">3 Seater</option>
+              </select>
+            </div>
+
             {/* Hostels listings grid */}
             {filteredHostels.length === 0 ? (
               <div className="text-center py-16 bg-white border rounded-3xl text-gray-400 text-xs font-medium">
@@ -832,7 +893,7 @@ export default function App() {
                 {filteredHostels.map((h) => (
                   <div
                     key={h.id}
-                    onClick={() => navigate(`/hostel/${h.id}`)}
+                    onClick={() => openHostel(h.id)}
                     className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-lg overflow-hidden flex flex-col group cursor-pointer transition-all pb-4 relative"
                   >
                     {/* Header Image */}
@@ -968,7 +1029,21 @@ export default function App() {
         )}
 
         {/* VIEW 6: USER PROFILE DASHBOARD */}
-        {currentTab === 'profile' && (
+        {currentTab === 'profile' && !session && (
+          <div className="w-full max-w-md mx-auto px-4 md:px-8 py-20 text-center animate-in fade-in duration-300">
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
+              <div className="text-5xl">🏠</div>
+              <h2 className="font-black text-2xl text-gray-900 mt-4">Welcome to Kotha Pasal</h2>
+              <p className="text-gray-500 mt-2">Sign in to manage listings, save rooms, and unlock owner contacts.</p>
+              <button onClick={() => setShowLogin(true)}
+                className="mt-6 w-full bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-full">
+                Sign in into Kotha Pasal and get free 3 credits on sign up
+              </button>
+            </div>
+          </div>
+        )}
+
+        {currentTab === 'profile' && session && (
           <div className="w-full px-4 md:px-8 py-8 space-y-6 animate-in fade-in duration-300 ">
 
             {/* Profile header card */}
@@ -1320,6 +1395,13 @@ export default function App() {
       {/* Property Details Dialog overlay */}
       {/* Double-handshake + heartbeat confirmation popups, intercepts on login */}
       <ConfirmationModals userId={session?.user?.id} />
+
+      {/* Sign-in overlay (prompted when an anon user opens gated detail) */}
+      {showLogin && !session && (
+        <div className="fixed inset-0 z-[90] overflow-y-auto bg-surface-bg">
+          <Login onClose={() => setShowLogin(false)} />
+        </div>
+      )}
 
       {selectedProperty && (
         <PropertyDetailModal 

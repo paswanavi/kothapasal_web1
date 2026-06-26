@@ -7,7 +7,7 @@ const COUNTRIES = [
   { name: 'USA', flag: '🇺🇸', dial: '+1', len: 10 },
 ];
 
-export default function Login() {
+export default function Login({ onClose }: { onClose?: () => void } = {}) {
   const [country, setCountry] = useState(COUNTRIES[0]);
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
@@ -31,7 +31,11 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
+    <div className="min-h-screen flex flex-col lg:flex-row relative">
+      {onClose && (
+        <button onClick={onClose} aria-label="Close"
+          className="absolute top-4 right-4 z-20 bg-white/90 hover:bg-white text-gray-700 rounded-full w-10 h-10 grid place-items-center shadow-md font-bold">✕</button>
+      )}
       {/* Brand panel — top band on mobile, left half on desktop */}
       <div className="flex flex-col justify-center lg:justify-between w-full lg:w-1/2 px-8 py-10 lg:p-14 text-white relative overflow-hidden text-center lg:text-left"
            style={{ background: 'linear-gradient(135deg,#69A132,#3f6b1f)' }}>
@@ -54,7 +58,7 @@ export default function Login() {
           <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
             <h2 className="text-3xl font-black text-gray-800">{sent ? 'Verify code' : 'Welcome 👋'}</h2>
             <p className="text-gray-500 mt-1 mb-7">
-              {sent ? `Enter the 6-digit code sent to ${full}` : 'Sign in or create an account with your phone.'}
+              {sent ? `Enter the 6-digit code sent to ${full}` : 'Sign in or create an account with your phone — get 3 free credits on sign up.'}
             </p>
 
             {!sent ? (

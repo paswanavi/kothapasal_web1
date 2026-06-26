@@ -77,11 +77,11 @@ export default function HostelPage({ hostelId, onBack }: Props) {
         <ArrowLeft className="w-4 h-4" /> Back to Hostels
       </button>
 
-      {/* Cover — object-contain so full photo shows */}
-      <div className="rounded-3xl overflow-hidden h-64 md:h-80 shadow-sm bg-gray-900 cursor-pointer"
+      {/* Cover — strict 16:9 so portrait + landscape both sit cleanly */}
+      <div className="rounded-3xl overflow-hidden aspect-video shadow-sm bg-gray-100 cursor-pointer"
         onClick={() => hostel.cover_photo && openLightbox([hostel.cover_photo], 0)}>
         {hostel.cover_photo
-          ? <img src={hostel.cover_photo} alt={hostel.name} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+          ? <img src={hostel.cover_photo} alt={hostel.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           : <div className="w-full h-full grid place-items-center text-5xl">🏢</div>}
       </div>
 
@@ -123,9 +123,9 @@ export default function HostelPage({ hostelId, onBack }: Props) {
               <div key={r.id} onClick={() => setRoom(r)}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-lg transition group flex flex-col">
                 {/* Photo with arrows */}
-                <div className="relative bg-gray-900 h-56 w-full overflow-hidden">
+                <div className="relative bg-gray-100 aspect-video w-full overflow-hidden">
                   {current
-                    ? <img src={current} className="w-full h-full object-contain" referrerPolicy="no-referrer"
+                    ? <img src={current} className="w-full h-full object-cover" referrerPolicy="no-referrer"
                         onClick={e => { e.stopPropagation(); openLightbox(photos, idx); }} />
                     : <div className="w-full h-full grid place-items-center text-4xl">🛏️</div>}
 
@@ -177,8 +177,8 @@ export default function HostelPage({ hostelId, onBack }: Props) {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setRoom(null)}>
           <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
             {room.photos?.length ? (
-              <div className="relative bg-gray-900 h-72">
-                <img src={room.photos[cardPhotoIdx[room.id] ?? 0]} className="w-full h-full object-contain cursor-pointer" referrerPolicy="no-referrer"
+              <div className="relative bg-gray-100 aspect-video">
+                <img src={room.photos[cardPhotoIdx[room.id] ?? 0]} className="w-full h-full object-cover cursor-pointer" referrerPolicy="no-referrer"
                   onClick={() => openLightbox(room.photos, cardPhotoIdx[room.id] ?? 0)} />
                 {room.photos.length > 1 && (
                   <>
